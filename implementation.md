@@ -4,7 +4,7 @@ This document is the source of truth for implementing version 0.1.0. The
 product scope remains in [`roadmap.md`](roadmap.md); this file records execution
 order, decisions, progress, and newly discovered work.
 
-**Status:** Stages 0–5 complete; ready for Stage 6
+**Status:** Stages 0–6 complete; ready for Stage 7
 **Last updated:** 2026-07-19
 
 ## Working Agreements
@@ -27,6 +27,13 @@ order, decisions, progress, and newly discovered work.
 - Authentication is an HTTP transport concern; credentials never enter events.
 - HTTP retries cover low-level connection failures and status codes 429, 500,
   502, 503, and 504. `max_retries` counts attempts after the first request.
+- Client configuration resolves `disabled` first; an explicit logical value
+  overrides `OPENLINEAGE_DISABLED`. Disabled clients use `NoopTransport` and
+  do not validate unused delivery settings.
+- An injected transport takes precedence over HTTP environment variables.
+  Combining it with explicit HTTP constructor arguments is rejected as
+  ambiguous. Without a transport or URL, the client uses `ConsoleTransport`;
+  partial HTTP settings without a URL are rejected.
 - Support `RunEvent` in 0.1.0. Static `JobEvent` and `DatasetEvent` are deferred.
 - Allow arbitrary facets even when no typed R model exists.
 
@@ -111,11 +118,11 @@ live endpoint or exposes a secret.
 
 ### Stage 6 — R6 client and configuration
 
-- [ ] Implement `OpenLineageClient` with `emit()` and transport injection.
-- [ ] Resolve explicit arguments before `OPENLINEAGE_URL`,
+- [x] Implement `OpenLineageClient` with `emit()` and transport injection.
+- [x] Resolve explicit arguments before `OPENLINEAGE_URL`,
   `OPENLINEAGE_ENDPOINT`, `OPENLINEAGE_API_KEY`, and `OPENLINEAGE_DISABLED`.
-- [ ] Define behavior for disabled emission and invalid/conflicting settings.
-- [ ] Test independent clients to prevent leaked mutable or credential state.
+- [x] Define behavior for disabled emission and invalid/conflicting settings.
+- [x] Test independent clients to prevent leaked mutable or credential state.
 
 **Gate:** The documented constructor can emit through HTTP, console, no-op,
 and accumulating transports with deterministic configuration precedence.
@@ -227,7 +234,7 @@ dataset facets also accept `deleted = NULL` where allowed by their schemas.
 - Golden fixtures are sufficient for core compatibility in 0.1.0; do not
   bundle the complete upstream schema unless model maintenance demonstrates a
   need for local schema validation or generation.
-- No implementation blockers remain for Stage 6.
+- No implementation blockers remain for Stage 7.
 
 ## Deferred Beyond 0.1.0
 
@@ -306,3 +313,17 @@ with the reason and schedule impact.
 - Added fully offline request, authentication, TLS, retry, failure, and secret
   redaction tests using `httr2::local_mocked_responses()`. All 258 tests and
   pkgdown checks pass; `R CMD check` has zero errors, warnings, and notes.
+- Implemented Stage 6 with an R6 `OpenLineageClient` that delegates validated
+  `RunEvent` models to injected or automatically configured transports and
+  preserves invisible event returns.
+- Added deterministic constructor precedence for explicit arguments and the
+  four supported environment variables. Disabled mode uses the no-op
+  transport, injected transports ignore HTTP environment settings, HTTP
+  settings without a URL fail, and otherwise unconfigured clients use the
+  console transport.
+- Added offline integration coverage for HTTP, console, no-op, and accumulating
+  delivery, invalid/conflicting configuration, client-boundary validation,
+  and isolation of mutable state and credentials between clients. A dedicated
+  test review found and closed the client-validation and environment-only
+  partial-configuration gaps. All 306 tests and pkgdown checks pass; `R CMD
+  check` has zero errors, warnings, and notes.

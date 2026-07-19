@@ -10,6 +10,8 @@
   OpenLineage serialization.
 - `HttpTransport` provides synchronous delivery, bearer or custom-header
   authentication, bounded retries, timeouts, and configurable TLS verification.
+- `OpenLineageClient` coordinates injected, HTTP, console, and disabled
+  transports with explicit-over-environment configuration precedence.
 - `ol_facet()` supports custom and future facet schemas without discarding
   extension fields.
 - `new_event_time()` formats event timestamps as millisecond-precision UTC.

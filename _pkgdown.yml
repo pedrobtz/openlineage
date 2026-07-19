@@ -23,8 +23,9 @@ reference:
   contents:
   - as_openlineage_list
   - to_openlineage_json
-- title: Transports
+- title: Client and transports
   contents:
+  - OpenLineageClient
   - local_transports
   - HttpTransport
 - title: Event utilities
