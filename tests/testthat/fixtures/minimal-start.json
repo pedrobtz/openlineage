@@ -1,0 +1,17 @@
+{
+  "eventTime": "2026-01-02T03:04:05.000Z",
+  "eventType": "START",
+  "inputs": [],
+  "job": {
+    "facets": {},
+    "name": "minimal",
+    "namespace": "example"
+  },
+  "outputs": [],
+  "producer": "https://github.com/pedrobtz/openlineage",
+  "run": {
+    "facets": {},
+    "runId": "019c0000-0000-7000-8000-000000000001"
+  },
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
+}
