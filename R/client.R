@@ -103,7 +103,7 @@
 #'
 #' @examples
 #' transport <- AccumulatingTransport$new()
-#' client <- OpenLineageClient$new(transport = transport)
+#' client <- OpenLineageClient$new(transport = transport, disabled = FALSE)
 #' event <- RunEvent(
 #'   Run(new_run_id()),
 #'   Job("example", "task"),

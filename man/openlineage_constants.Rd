@@ -26,5 +26,7 @@ Constants used by \code{openlineage} when constructing OpenLineage events.
 }
 \examples{
 OPENLINEAGE_SCHEMA_VERSION
+OPENLINEAGE_SCHEMA_URL
 OPENLINEAGE_RUN_EVENT_SCHEMA_URL
+OPENLINEAGE_PRODUCER
 }

@@ -30,3 +30,11 @@ A typed tags facet S7 object.
 \description{
 Typed tags facets
 }
+\examples{
+tag <- ol_tag("environment", "production")
+TagsJobFacet(list(tag))
+TagsRunFacet(list(tag))
+TagsDatasetFacet(list(
+  ol_tag("sensitivity", "restricted", field = "customer_id")
+))
+}

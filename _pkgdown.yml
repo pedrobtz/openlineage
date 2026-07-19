@@ -1,8 +1,12 @@
 url: https://pedrobtz.github.io/openlineage/
+
 template:
   bootstrap: 5
 
 reference:
+- title: Overview
+  contents:
+  - openlineage-package
 - title: Events and models
   contents:
   - RunEvent
@@ -33,3 +37,8 @@ reference:
   - new_run_id
   - new_event_time
   - openlineage_constants
+
+articles:
+- title: Workflows
+  contents:
+  - openlineage-lifecycle

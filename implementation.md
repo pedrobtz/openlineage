@@ -4,8 +4,8 @@ This document is the source of truth for implementing version 0.1.0. The
 product scope remains in [`roadmap.md`](roadmap.md); this file records execution
 order, decisions, progress, and newly discovered work.
 
-**Status:** Stages 0–6 complete; ready for Stage 7
-**Last updated:** 2026-07-19
+**Status:** Stage 8 local hardening complete; remote validation pending
+**Last updated:** 2026-07-20
 
 ## Working Agreements
 
@@ -129,24 +129,24 @@ and accumulating transports with deterministic configuration precedence.
 
 ### Stage 7 — Public documentation and compatibility
 
-- [ ] Add an offline README quick start and lifecycle vignette.
-- [ ] Document configuration, authentication, facets, errors, and extension
+- [x] Add an offline README quick start and lifecycle vignette.
+- [x] Document configuration, authentication, facets, errors, and extension
   points; ensure every example is executable without network access.
-- [ ] Cross-check both golden fixtures against the Python client semantics.
-- [ ] Add `NEWS.md` and organize the pkgdown reference index.
+- [x] Cross-check both golden fixtures against the Python client semantics.
+- [x] Add `NEWS.md` and organize the pkgdown reference index.
 
 **Gate:** A new user can construct and emit a complete lifecycle using only
 package documentation, and all examples pass offline.
 
 ### Stage 8 — CRAN hardening and release
 
-- [ ] Finalize `DESCRIPTION`, authors, license, URLs, and dependency bounds.
-- [ ] Review fixture/schema attribution and bundled-file licensing.
+- [x] Finalize `DESCRIPTION`, authors, license, URLs, and dependency bounds.
+- [x] Review fixture/schema attribution and bundled-file licensing.
 - [ ] Run documentation, tests, URL checks, `R CMD check --as-cran`,
   Win-builder, and R-hub checks; resolve or explain every note.
 - [ ] Confirm CI on Linux, macOS, and Windows for current, old-release, and
   development R.
-- [ ] Set version 0.1.0, finalize release notes and `cran-comments.md`, then
+- [x] Set version 0.1.0, finalize release notes and `cran-comments.md`, then
   build and inspect the submission tarball.
 
 **Gate:** The tested source tarball has no errors or warnings, no unexplained
@@ -229,12 +229,17 @@ dataset facets also accept `deleted = NULL` where allowed by their schemas.
 
 ## Open Decisions and Blockers
 
-- Package author details are required before Stage 8; the package now uses the
-  MIT license.
+- Package author metadata and the MIT copyright holder are now recorded as
+  Pedro Baltazar; the maintainer email matches the repository's Git history.
 - Golden fixtures are sufficient for core compatibility in 0.1.0; do not
   bundle the complete upstream schema unless model maintenance demonstrates a
   need for local schema validation or generation.
-- No implementation blockers remain for Stage 7.
+- Local release preparation has no implementation blockers. Win-builder,
+  R-hub, and the GitHub Actions matrix remain pending because the current
+  branch and release changes have not been pushed to the private remote.
+- The future pkgdown URL remains in `_pkgdown.yml`, which is excluded from the
+  source package. Its URL-consistency check should be rerun after the repository
+  and site are public and the public URLs can be restored to `DESCRIPTION`.
 
 ## Deferred Beyond 0.1.0
 
@@ -327,3 +332,42 @@ with the reason and schedule impact.
   test review found and closed the client-validation and environment-only
   partial-configuration gaps. All 306 tests and pkgdown checks pass; `R CMD
   check` has zero errors, warnings, and notes.
+
+### 2026-07-20
+
+- Implemented Stage 7 with an offline README quick start and a fully executable
+  lifecycle vignette covering datasets, typed and generic facets, delivery,
+  authentication, configuration precedence, and condition handling.
+- Expanded grouped roxygen examples so every exported constructor is exercised
+  without network access, published package-level overview documentation, and
+  organized the pkgdown overview, reference, and workflow indexes.
+- Regenerated the two fixtures from the checked-out Python client at upstream
+  commit `667d632b91291700f1b3e3d6342613ba78edbda6`; both match the checked-in
+  JSON exactly, while the R tests continue to match those fixtures semantically.
+- Replaced placeholder `DESCRIPTION` metadata with the package title,
+  purpose, maintainer, copyright holder, language, and vignette dependencies.
+  The development version remains `0.0.0.9000` until the Stage 8 release step.
+- Verification: all 306 tests, roxygen examples, vignette builds, and pkgdown
+  checks pass; `R CMD check` has zero errors, warnings, and notes.
+- Finalized the 0.1.0 release metadata, dependency lower bounds, MIT license,
+  release notes, CRAN comments, and package spelling dictionary. The package
+  name is absent from current and archived CRAN package indexes and the current
+  Bioconductor release index.
+- Reviewed the golden fixtures as generated test data: their provenance names
+  the exact OpenLineage Python commit and Apache-2.0 license, and the source
+  archive contains no copied Python source or bundled OpenLineage schema.
+- Regenerated documentation and passed all 306 offline tests, the spelling and
+  URL audits, source-package build, and installation/loading/serialization in
+  an isolated library without Suggested packages.
+- Built and inspected `openlineage_0.1.0.tar.gz` (48 KB). Development files,
+  repository automation, release comments, and local project metadata are
+  excluded; required documentation, tests, fixture provenance, vignette, and
+  license files are present.
+- `R CMD check --as-cran` on the source archive, using HTML Tidy 5.8.0,
+  completed with zero errors, zero warnings, and only the expected
+  new-submission note. Tests, examples, vignettes, and both the PDF and HTML
+  manuals all passed.
+- The checked-in GitHub Actions matrix covers macOS and Windows release plus
+  Linux development, release, and old-release R. Remote confirmation, R-hub,
+  and Win-builder checks remain pending until the release branch is pushed and
+  external checks are started.

@@ -36,6 +36,10 @@ event <- RunEvent(
 )
 transport$emit(event)
 length(transport$events)
+
+console <- ConsoleTransport$new(pretty = FALSE)
+noop <- NoopTransport$new()
+noop$emit(event)
 }
 \section{Super class}{
 \code{OpenLineageTransport} -> \code{AccumulatingTransport}

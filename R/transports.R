@@ -132,6 +132,10 @@ NULL
 #' )
 #' transport$emit(event)
 #' length(transport$events)
+#'
+#' console <- ConsoleTransport$new(pretty = FALSE)
+#' noop <- NoopTransport$new()
+#' noop$emit(event)
 AccumulatingTransport <- R6Class(
   "AccumulatingTransport",
   inherit = .OpenLineageTransport,

@@ -234,6 +234,11 @@ Job <- S7::new_class(
 #'
 #' @return A `Dataset`, `InputDataset`, or `OutputDataset` S7 object.
 #' @name datasets
+#'
+#' @examples
+#' Dataset("postgres://warehouse", "analytics.orders")
+#' InputDataset("postgres://warehouse", "raw.orders")
+#' OutputDataset("postgres://warehouse", "analytics.orders")
 NULL
 
 #' @rdname datasets

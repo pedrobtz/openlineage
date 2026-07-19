@@ -35,3 +35,7 @@ A typed input- or output-dataset facet S7 object.
 \description{
 Input and output statistics facets
 }
+\examples{
+InputStatisticsInputDatasetFacet(row_count = 100L)
+OutputStatisticsOutputDatasetFacet(row_count = 100L, size = 2048L)
+}

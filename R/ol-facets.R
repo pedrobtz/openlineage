@@ -437,6 +437,14 @@ ol_facet <- function(
 #'
 #' @return A typed run facet S7 object.
 #' @name run_facets
+#'
+#' @examples
+#' NominalTimeRunFacet("2026-01-02T03:00:00.000Z")
+#' parent_run <- Run(new_run_id())
+#' parent_job <- Job("example", "parent")
+#' ParentRunFacet(parent_run, parent_job)
+#' ErrorMessageRunFacet("Query failed", "R")
+#' ProcessingEngineRunFacet("4.6.0", name = "R")
 NULL
 
 #' @rdname run_facets
@@ -561,6 +569,11 @@ ProcessingEngineRunFacet <- S7::new_class(
 #'
 #' @return A typed dataset facet or schema-field S7 object.
 #' @name dataset_facets
+#'
+#' @examples
+#' field <- SchemaField("order_id", "INTEGER", ordinal_position = 1L)
+#' SchemaDatasetFacet(list(field))
+#' DatasourceDatasetFacet("warehouse", "postgres://warehouse")
 NULL
 
 #' @rdname dataset_facets
@@ -671,6 +684,15 @@ DatasourceDatasetFacet <- S7::new_class(
 #'
 #' @return A typed job facet or emission-pattern S7 object.
 #' @name job_facets
+#'
+#' @examples
+#' SQLJobFacet("SELECT 1", dialect = "ansi")
+#' SourceCodeLocationJobFacet(
+#'   "git",
+#'   "https://github.com/example/project/blob/main/job.R"
+#' )
+#' pattern <- EmissionPattern("EVENT_BASED", "COMPLETE_SNAPSHOT")
+#' JobTypeJobFacet("BATCH", "R", emission_pattern = pattern)
 NULL
 
 #' @rdname job_facets
@@ -811,6 +833,10 @@ JobTypeJobFacet <- S7::new_class(
 #'
 #' @return A typed input- or output-dataset facet S7 object.
 #' @name io_statistics_facets
+#'
+#' @examples
+#' InputStatisticsInputDatasetFacet(row_count = 100L)
+#' OutputStatisticsOutputDatasetFacet(row_count = 100L, size = 2048L)
 NULL
 
 #' @rdname io_statistics_facets
@@ -924,6 +950,14 @@ ol_tag <- function(key, value, source = NULL, field = NULL) {
 #'
 #' @return A typed tags facet S7 object.
 #' @name tags_facets
+#'
+#' @examples
+#' tag <- ol_tag("environment", "production")
+#' TagsJobFacet(list(tag))
+#' TagsRunFacet(list(tag))
+#' TagsDatasetFacet(list(
+#'   ol_tag("sensitivity", "restricted", field = "customer_id")
+#' ))
 NULL
 
 #' @rdname tags_facets

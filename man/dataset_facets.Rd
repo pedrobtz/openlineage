@@ -52,3 +52,8 @@ A typed dataset facet or schema-field S7 object.
 \description{
 Constructors for dataset-level schema, data-source, and tag metadata.
 }
+\examples{
+field <- SchemaField("order_id", "INTEGER", ordinal_position = 1L)
+SchemaDatasetFacet(list(field))
+DatasourceDatasetFacet("warehouse", "postgres://warehouse")
+}

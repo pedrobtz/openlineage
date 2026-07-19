@@ -4,26 +4,35 @@
 \name{openlineage-package}
 \alias{openlineage}
 \alias{openlineage-package}
-\title{openlineage: What the Package Does (One Line, Title Case)}
+\title{Create and Emit OpenLineage Events}
 \description{
-What the package does (one paragraph).
+Build validated OpenLineage 2.0.2 run events, serialize them to the protocol
+wire format, and emit them through local or synchronous HTTP transports.
 }
-\seealso{
-Useful links:
-\itemize{
-  \item \url{https://pedrobtz.github.io/openlineage/}
-  \item \url{https://github.com/pedrobtz/openlineage}
-  \item Report bugs at \url{https://github.com/pedrobtz/openlineage/issues}
+\section{Main workflow}{
+
+Create a \link{Run}, \link{Job}, and optional input/output datasets, then combine them
+in a \link{RunEvent}. An \link{OpenLineageClient} emits the event through an injected
+transport or through HTTP configured by constructor arguments or environment
+variables.
 }
 
+\section{Facets and extensions}{
+
+Typed facet constructors cover common metadata. Use \link{ol_facet} to attach a
+facet schema that does not yet have a typed R constructor.
+}
+
+\seealso{
+\link{OpenLineageClient}, \link{RunEvent}, \link{local_transports},
+\link{HttpTransport}
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com}
+\strong{Maintainer}: Pedro Baltazar \email{pedrobtz@gmail.com} [copyright holder]
 
 Authors:
 \itemize{
-  \item First Last \email{first.last@example.com}
+  \item Pedro Baltazar \email{pedrobtz@gmail.com} [copyright holder]
 }
 
 }
-\keyword{internal}

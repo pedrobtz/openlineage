@@ -75,3 +75,12 @@ A typed job facet or emission-pattern S7 object.
 \description{
 Constructors for SQL, source location, and job-type metadata.
 }
+\examples{
+SQLJobFacet("SELECT 1", dialect = "ansi")
+SourceCodeLocationJobFacet(
+  "git",
+  "https://github.com/example/project/blob/main/job.R"
+)
+pattern <- EmissionPattern("EVENT_BASED", "COMPLETE_SNAPSHOT")
+JobTypeJobFacet("BATCH", "R", emission_pattern = pattern)
+}

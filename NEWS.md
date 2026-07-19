@@ -1,5 +1,7 @@
-# openlineage 0.0.0.9000
+# openlineage 0.1.0
 
+- Added an offline quick start and lifecycle vignette covering datasets,
+  facets, configuration, authentication, and condition handling.
 - Added generic and typed facets for common run, job, dataset, input, and
   output metadata, with validation of their placement.
 - Added S7 models for run events, runs, jobs, and datasets.

@@ -32,3 +32,8 @@ A \code{Dataset}, \code{InputDataset}, or \code{OutputDataset} S7 object.
 lifecycle-specific facet maps and are the only dataset types accepted by a
 \code{RunEvent}.
 }
+\examples{
+Dataset("postgres://warehouse", "analytics.orders")
+InputDataset("postgres://warehouse", "raw.orders")
+OutputDataset("postgres://warehouse", "analytics.orders")
+}

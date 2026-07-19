@@ -61,3 +61,11 @@ A typed run facet S7 object.
 \description{
 Constructors for commonly used OpenLineage run facets.
 }
+\examples{
+NominalTimeRunFacet("2026-01-02T03:00:00.000Z")
+parent_run <- Run(new_run_id())
+parent_job <- Job("example", "parent")
+ParentRunFacet(parent_run, parent_job)
+ErrorMessageRunFacet("Query failed", "R")
+ProcessingEngineRunFacet("4.6.0", name = "R")
+}
