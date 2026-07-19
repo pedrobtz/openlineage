@@ -4,7 +4,7 @@ This document is the source of truth for implementing version 0.1.0. The
 product scope remains in [`roadmap.md`](roadmap.md); this file records execution
 order, decisions, progress, and newly discovered work.
 
-**Status:** Stages 0–4 complete; ready for Stage 5
+**Status:** Stages 0–5 complete; ready for Stage 6
 **Last updated:** 2026-07-19
 
 ## Working Agreements
@@ -25,6 +25,8 @@ order, decisions, progress, and newly discovered work.
   logic in the package.
 - Keep models, serialization, configuration, and transports separate.
 - Authentication is an HTTP transport concern; credentials never enter events.
+- HTTP retries cover low-level connection failures and status codes 429, 500,
+  502, 503, and 504. `max_retries` counts attempts after the first request.
 - Support `RunEvent` in 0.1.0. Static `JobEvent` and `DatasetEvent` are deferred.
 - Allow arbitrary facets even when no typed R model exists.
 
@@ -95,13 +97,13 @@ events without an OpenLineage server.
 
 ### Stage 5 — HTTP delivery and authentication
 
-- [ ] Implement endpoint normalization for `api/v1/lineage`, timeout, and TLS
+- [x] Implement endpoint normalization for `api/v1/lineage`, timeout, and TLS
   verification with `httr2`.
-- [ ] Add bearer API-key and custom-header authentication with conflict checks.
-- [ ] Keep credentials private and redact them from printing and conditions.
-- [ ] Add bounded retries only for approved transient failures; 401 and 403
+- [x] Add bearer API-key and custom-header authentication with conflict checks.
+- [x] Keep credentials private and redact them from printing and conditions.
+- [x] Add bounded retries only for approved transient failures; 401 and 403
   must raise non-retryable `openlineage_auth_error` conditions.
-- [ ] Assert URLs, headers, bodies, retry behavior, and failures using
+- [x] Assert URLs, headers, bodies, retry behavior, and failures using
   `httr2::local_mocked_responses()`.
 
 **Gate:** Mocked requests prove correct wire delivery and no test requires a
@@ -225,8 +227,7 @@ dataset facets also accept `deleted = NULL` where allowed by their schemas.
 - Golden fixtures are sufficient for core compatibility in 0.1.0; do not
   bundle the complete upstream schema unless model maintenance demonstrates a
   need for local schema validation or generation.
-- `R CMD check` reports `httr2` as unused until Stage 5 implements HTTP
-  delivery.
+- No implementation blockers remain for Stage 6.
 
 ## Deferred Beyond 0.1.0
 
@@ -293,3 +294,15 @@ with the reason and schedule impact.
   configuration, and custom/console failures. All 178 tests and pkgdown checks
   pass; `R CMD check` has zero errors and warnings, with one expected `httr2`
   note pending Stage 5.
+- Implemented Stage 5 with synchronous JSON `POST` delivery, normalized base
+  URLs and endpoints, request timeouts, and explicit TLS verification control.
+- Added bearer API-key and custom-header authentication. Conflicting
+  `Authorization` sources and custom `Content-Type` values are rejected;
+  credential values are redacted in httr2 requests, R6 printing and `str()`,
+  and trace-free package conditions.
+- Added bounded retries for connection failures and HTTP 429, 500, 502, 503,
+  and 504 responses. HTTP 401/403 bypass retries and raise
+  `openlineage_auth_error`; other responses use `openlineage_http_error`.
+- Added fully offline request, authentication, TLS, retry, failure, and secret
+  redaction tests using `httr2::local_mocked_responses()`. All 258 tests and
+  pkgdown checks pass; `R CMD check` has zero errors, warnings, and notes.

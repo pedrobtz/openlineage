@@ -26,6 +26,7 @@ reference:
 - title: Transports
   contents:
   - local_transports
+  - HttpTransport
 - title: Event utilities
   contents:
   - new_run_id

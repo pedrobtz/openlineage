@@ -8,6 +8,8 @@
   offline testing, local inspection, and disabled emission.
 - `as_openlineage_list()` and `to_openlineage_json()` provide deterministic
   OpenLineage serialization.
+- `HttpTransport` provides synchronous delivery, bearer or custom-header
+  authentication, bounded retries, timeouts, and configurable TLS verification.
 - `ol_facet()` supports custom and future facet schemas without discarding
   extension fields.
 - `new_event_time()` formats event timestamps as millisecond-precision UTC.
