@@ -4,7 +4,7 @@ This document is the source of truth for implementing version 0.1.0. The
 product scope remains in [`roadmap.md`](roadmap.md); this file records execution
 order, decisions, progress, and newly discovered work.
 
-**Status:** Stages 0–3 complete; ready for Stage 4
+**Status:** Stages 0–4 complete; ready for Stage 5
 **Last updated:** 2026-07-19
 
 ## Working Agreements
@@ -84,11 +84,11 @@ correctly, including generic and typed facets.
 
 ### Stage 4 — Transport contract and local transports
 
-- [ ] Define the internal transport interface and return/error semantics.
-- [ ] Implement accumulating, console, and no-op transports.
-- [ ] Verify injected transports receive the model or serialized payload
+- [x] Define the internal transport interface and return/error semantics.
+- [x] Implement accumulating, console, and no-op transports.
+- [x] Verify injected transports receive the model or serialized payload
   specified by the contract—never an accidental mixture of both.
-- [ ] Test transport failures with stable condition classes.
+- [x] Test transport failures with stable condition classes.
 
 **Gate:** Lifecycle examples can run offline and tests can inspect all emitted
 events without an OpenLineage server.
@@ -164,7 +164,8 @@ protocol's camelCase names.
 | Constants | `OPENLINEAGE_SCHEMA_VERSION`, `OPENLINEAGE_SCHEMA_URL`, `OPENLINEAGE_RUN_EVENT_SCHEMA_URL`, and `OPENLINEAGE_PRODUCER` |
 | Client | `OpenLineageClient$new(transport = NULL, url = NULL, endpoint = "api/v1/lineage", api_key = NULL, headers = character(), timeout = 5, verify_tls = TRUE, max_retries = 3L, disabled = NULL)`; `emit(event)` returns `event` invisibly after success |
 | HTTP transport | `HttpTransport$new(url, endpoint = "api/v1/lineage", api_key = NULL, headers = character(), timeout = 5, verify_tls = TRUE, max_retries = 3L)` |
-| Local transports | `ConsoleTransport$new(stream = stdout(), pretty = TRUE)` and `NoopTransport$new()` |
+| Transport contract | `emit(event)` receives a validated `RunEvent` model and returns it invisibly after successful delivery; transport failures inherit from `openlineage_transport_error` |
+| Local transports | `AccumulatingTransport$new()`, `ConsoleTransport$new(stream = stdout(), pretty = TRUE)`, and `NoopTransport$new()`; all provide `close()`, and the accumulator provides public `events` plus `clear()` |
 
 All facet constructors accept `producer = OPENLINEAGE_PRODUCER`. Job and
 dataset facets also accept `deleted = NULL` where allowed by their schemas.
@@ -224,8 +225,8 @@ dataset facets also accept `deleted = NULL` where allowed by their schemas.
 - Golden fixtures are sufficient for core compatibility in 0.1.0; do not
   bundle the complete upstream schema unless model maintenance demonstrates a
   need for local schema validation or generation.
-- `R CMD check` reports `httr2` and R6 as unused until later stages implement
-  their planned features.
+- `R CMD check` reports `httr2` as unused until Stage 5 implements HTTP
+  delivery.
 
 ## Deferred Beyond 0.1.0
 
@@ -278,3 +279,17 @@ with the reason and schedule impact.
   pipe and lambda shorthand. All 142 tests and pkgdown checks pass; `R CMD
   check` has zero errors and warnings, with the expected unused `httr2`/R6
   note pending Stages 5 and 6.
+- Implemented Stage 4 with a model-first transport contract: `emit(event)`
+  receives a validated `RunEvent` and returns that event invisibly after
+  successful delivery. The internal adapter normalizes custom transport
+  returns, preserves already classified package errors, and wraps unexpected
+  failures as `openlineage_transport_error`.
+- Added independent R6 `AccumulatingTransport`, `ConsoleTransport`, and
+  `NoopTransport` implementations. The accumulator stores models in order,
+  console output supports compact or pretty JSON, and all local transports
+  provide synchronous `close()` behavior.
+- Added offline coverage for model injection, return visibility, accumulator
+  isolation and clearing, console output, no-op emission, invalid
+  configuration, and custom/console failures. All 178 tests and pkgdown checks
+  pass; `R CMD check` has zero errors and warnings, with one expected `httr2`
+  note pending Stage 5.
