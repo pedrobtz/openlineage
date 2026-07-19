@@ -4,7 +4,7 @@ This document is the source of truth for implementing version 0.1.0. The
 product scope remains in [`roadmap.md`](roadmap.md); this file records execution
 order, decisions, progress, and newly discovered work.
 
-**Status:** Stages 0 and 1 complete; ready for Stage 2  
+**Status:** Stages 0–3 complete; ready for Stage 4
 **Last updated:** 2026-07-19
 
 ## Working Agreements
@@ -59,25 +59,25 @@ have stable classes, and package loading/checking succeeds.
 
 ### Stage 2 — Core models and serialization
 
-- [ ] Implement `RunState`, `Run`, `Job`, `Dataset`, `InputDataset`,
+- [x] Implement `RunState`, `Run`, `Job`, `Dataset`, `InputDataset`,
   `OutputDataset`, and `RunEvent` as S7 models.
-- [ ] Validate required values, UUIDs, states, timestamps, and dataset roles.
-- [ ] Implement one recursive list conversion boundary that preserves
+- [x] Validate required values, UUIDs, states, timestamps, and dataset roles.
+- [x] Implement one recursive list conversion boundary that preserves
   OpenLineage field names, unwraps enums, omits `NULL`, and retains required
   empty arrays.
-- [ ] Implement deterministic JSON serialization.
-- [ ] Match the minimal golden fixture semantically.
+- [x] Implement deterministic JSON serialization.
+- [x] Match the minimal golden fixture semantically.
 
 **Gate:** A minimal `START` event validates and produces the expected JSON.
 
 ### Stage 3 — Facets and lifecycle coverage
 
-- [ ] Implement `ol_facet()` with `_producer`, `_schemaURL`, and extension
+- [x] Implement `ol_facet()` with `_producer`, `_schemaURL`, and extension
   fields without discarding unknown values.
-- [ ] Add the typed facets listed for 0.1.0 in `roadmap.md`.
-- [ ] Support job, run, input-dataset, and output-dataset facet placement.
-- [ ] Table-test every lifecycle state and representative invalid inputs.
-- [ ] Match the terminal golden fixture with datasets and facets.
+- [x] Add the typed facets listed for 0.1.0 in `roadmap.md`.
+- [x] Support job, run, input-dataset, and output-dataset facet placement.
+- [x] Table-test every lifecycle state and representative invalid inputs.
+- [x] Match the terminal golden fixture with datasets and facets.
 
 **Gate:** `START`, `RUNNING`, `COMPLETE`, `ABORT`, and `FAIL` events serialize
 correctly, including generic and typed facets.
@@ -219,13 +219,13 @@ dataset facets also accept `deleted = NULL` where allowed by their schemas.
 
 ## Open Decisions and Blockers
 
-- Package author details and license selection are required before Stage 8.
+- Package author details are required before Stage 8; the package now uses the
+  MIT license.
 - Golden fixtures are sufficient for core compatibility in 0.1.0; do not
   bundle the complete upstream schema unless model maintenance demonstrates a
   need for local schema validation or generation.
-- `R CMD check` reports the placeholder license as a warning. It also reports
-  `httr2`, `jsonlite`, R6, and S7 as unused until later stages implement their
-  planned features.
+- `R CMD check` reports `httr2` and R6 as unused until later stages implement
+  their planned features.
 
 ## Deferred Beyond 0.1.0
 
@@ -259,3 +259,22 @@ with the reason and schedule impact.
 - Added an order-aware semantic JSON expectation and fixture checks. All 28
   tests and the pkgdown check pass; `R CMD check` remains at zero errors with
   only the previously recorded license warning and unused-import note.
+- Implemented Stage 2 with S7 core models, strict UUID/state/time/URI and
+  dataset-role validation, wire-name conversion, recursive `NULL` omission,
+  and deterministic JSON serialization.
+- The minimal `START` event matches the Python golden fixture semantically.
+  All 80 tests and pkgdown checks pass; `R CMD check` has zero errors and
+  warnings, with one expected note for the Stage 5/6 `httr2` and R6 imports.
+- Implemented Stage 3 with `ol_facet()` as the extension point and typed run,
+  job, dataset, input-statistics, output-statistics, job-type, and tag facets.
+- Added role-aware facet-map validation so typed facets can only be attached
+  where their OpenLineage schema permits; generic facets remain usable in all
+  maps for forward-compatible extensions.
+- Covered `START`, `RUNNING`, `COMPLETE`, `ABORT`, `FAIL`, and `OTHER`, plus
+  representative validation failures, nested schema fields, parent runs, and
+  all typed facet families. The complete dataset event matches the Python
+  fixture semantically.
+- Declared R 4.1.0 as the minimum version because package style uses the native
+  pipe and lambda shorthand. All 142 tests and pkgdown checks pass; `R CMD
+  check` has zero errors and warnings, with the expected unused `httr2`/R6
+  note pending Stages 5 and 6.

@@ -3,6 +3,26 @@ template:
   bootstrap: 5
 
 reference:
+- title: Events and models
+  contents:
+  - RunEvent
+  - RunState
+  - Run
+  - Job
+  - datasets
+- title: Facets
+  contents:
+  - ol_facet
+  - run_facets
+  - job_facets
+  - dataset_facets
+  - io_statistics_facets
+  - ol_tag
+  - tags_facets
+- title: Serialization
+  contents:
+  - as_openlineage_list
+  - to_openlineage_json
 - title: Event utilities
   contents:
   - new_run_id
