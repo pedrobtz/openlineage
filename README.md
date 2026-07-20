@@ -1,5 +1,9 @@
 # openlineage
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/pedrobtz/openlineage/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pedrobtz/openlineage/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 `openlineage` is an R client for constructing, validating, serializing, and
 emitting [OpenLineage](https://openlineage.io/) run events. It targets the
 OpenLineage 2.0.2 schema and supports synchronous HTTP delivery as well as
