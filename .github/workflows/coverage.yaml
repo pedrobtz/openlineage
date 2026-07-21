@@ -1,0 +1,12 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+name: coverage.yaml
+
+jobs:
+  coverage:
+    uses: pedrobtz/r-actions/.github/workflows/coverage.yml@v1
+    permissions:
+      contents: write
