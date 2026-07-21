@@ -11,14 +11,34 @@ concepts include `RunEvent`, `RunState`, `Run`, `Job`, `Dataset`, facets, and
 configurable transports. Keep event models separate from serialization,
 configuration, and transport code.
 
+## Current Package Status
+
+The package is at version `0.1.0` and targets OpenLineage schema `2.0.2`.
+Implemented public pieces include validated S7 models for run states, runs,
+jobs, datasets, run events, typed/common facets, generic facets, tags,
+deterministic JSON serialization, UUID and event-time helpers, package
+constants, local transports, a synchronous HTTP transport, and an R6
+`OpenLineageClient`. The client can emit through injected transports, console
+output, no-op mode, or HTTP configured by arguments or `OPENLINEAGE_*`
+environment variables.
+
+The default test suite is offline and covers models, validation, serialization,
+facets, lifecycle behavior, local transports, mocked HTTP transport behavior,
+client configuration, constants, run IDs, event times, and checked-in golden
+JSON fixtures. Generated documentation in `man/`, the `_pkgdown.yml` reference
+index, and `vignettes/openlineage-lifecycle.Rmd` are present. GitHub Actions
+currently includes R CMD check, pkgdown, and coverage workflows.
+
 ## Project Structure & Module Organization
 
-Put package code in `R/`, using focused files such as `R/run-event.R` and
-`R/http-transport.R`. Mirror them with tests such as
-`tests/testthat/test-run-event.R`; `tests/testthat.R` is the suite entry point.
-`DESCRIPTION` lists preferred tools: `httr2` for HTTP, `jsonlite` for JSON,
-`S7` for models and validation, `R6` for the stateful client, and `cli` for
-user-facing conditions. Use only when needed; justify new dependencies.
+Put package code in `R/`, following the existing focused modules:
+`R/models.R`, `R/ol-facets.R`, `R/serialization.R`, `R/transports.R`,
+`R/z-http-transport.R`, `R/client.R`, `R/validation.R`,
+`R/conditions.R`, `R/constants.R`, `R/run-id.R`, and `R/event-time.R`.
+Mirror them with tests in `tests/testthat/test-*.R`; `tests/testthat.R` is the
+suite entry point. `DESCRIPTION` currently uses `httr2` for HTTP, `jsonlite`
+for JSON, `S7` for models and validation, `R6` for the stateful client, `cli`
+for user-facing conditions, and `uuid` for run IDs. Justify any new dependency.
 `NAMESPACE` and `man/*.Rd` are generated from roxygen2 comments and must not be
 edited manually. Use `vignettes/` for workflows and `_pkgdown.yml` for the
 documentation-site index.
@@ -29,6 +49,7 @@ documentation-site index.
 - `Rscript -e 'devtools::document()'` regenerates documentation and exports.
 - `Rscript -e 'devtools::test()'` runs all testthat tests.
 - `Rscript -e 'devtools::check()'` performs the full package check.
+- `Rscript -e 'pkgdown::check_pkgdown()'` validates the documentation site.
 - `R CMD build .` creates a source package archive.
 
 ## Coding Style & Naming Conventions
@@ -42,19 +63,21 @@ idiomatic.
 
 ## Testing Guidelines
 
-Use testthat edition 3; the default suite must be fully offline and require no
-OpenLineage server. Adapt the Python suite patterns: deterministic event
-helpers, checked-in golden JSON fixtures, and an accumulating/no-output fake
-transport. Use `httr2::local_mocked_responses()` to assert request endpoints,
-headers, bodies, retries, and failures. Compare parsed JSON unless formatting
-matters, and table-test validation/configuration edges. Any disposable local
-stub-server tests must be opt-in. Run `devtools::check()` before submission.
+Use testthat edition 3; the default suite must stay fully offline and require
+no OpenLineage server. Continue the existing suite patterns: deterministic
+event helpers, checked-in golden JSON fixtures, snapshot tests for conditions,
+and accumulating/no-output fake transports. Use
+`httr2::local_mocked_responses()` to assert request endpoints, headers, bodies,
+retries, and failures. Compare parsed JSON unless formatting matters, and
+table-test validation/configuration edges. Any disposable local stub-server
+tests must be opt-in. Run `devtools::check()` before submission.
 
 ## Commit & Pull Request Guidelines
 
-History currently contains only `Initial commit`, so use concise, imperative
-subjects such as `Add HTTP event transport`. Keep unrelated changes separate.
-Pull requests should explain motivation, public API and protocol effects, link
-issues, and report `devtools::check()` results. Call out the OpenLineage schema
-version used and any compatibility differences from the Python client. The
-GitHub Actions R CMD check matrix must pass on macOS, Windows, and Linux.
+Use concise, imperative subjects such as `Add HTTP event transport`. Keep
+unrelated changes separate. Pull requests should explain motivation, public API
+and protocol effects, link issues, and report `devtools::check()` results. Call
+out the OpenLineage schema version used and any compatibility differences from
+the Python client. The GitHub Actions R CMD check matrix must pass on macOS,
+Windows, and Linux; pkgdown and coverage workflows should also pass when they
+run.
