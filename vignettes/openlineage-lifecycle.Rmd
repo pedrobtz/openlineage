@@ -1,0 +1,178 @@
+---
+title: "Emit an OpenLineage Run Lifecycle"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Emit an OpenLineage Run Lifecycle}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+`openlineage` represents protocol values with validated models and delegates
+delivery to a transport. This article uses an accumulating transport, so every
+example runs without an OpenLineage server or network connection.
+
+## Create shared run and job metadata
+
+A lifecycle reuses one run identifier and job identity. Facets add metadata to
+those core objects.
+
+```{r}
+library(openlineage)
+
+transport <- AccumulatingTransport$new()
+client <- OpenLineageClient$new(transport = transport, disabled = FALSE)
+
+run <- Run(
+  new_run_id(),
+  facets = list(
+    nominalTime = NominalTimeRunFacet(
+      "2026-01-02T03:00:00.000Z",
+      "2026-01-02T04:00:00.000Z"
+    ),
+    tags = TagsRunFacet(list(ol_tag("environment", "production")))
+  )
+)
+job <- Job(
+  "example-scheduler",
+  "daily-orders",
+  facets = list(
+    sql = SQLJobFacet(
+      "SELECT * FROM raw.orders",
+      dialect = "ansi"
+    )
+  )
+)
+```
+
+## Describe input and output datasets
+
+Dataset facets describe stable dataset metadata. Input- and output-specific
+facets describe what happened during this run.
+
+```{r}
+schema <- SchemaDatasetFacet(list(
+  SchemaField("order_id", "INTEGER", ordinal_position = 1L),
+  SchemaField("amount", "DECIMAL", ordinal_position = 2L)
+))
+
+input <- InputDataset(
+  "postgres://warehouse",
+  "raw.orders",
+  facets = list(schema = schema),
+  input_facets = list(
+    inputStatistics = InputStatisticsInputDatasetFacet(row_count = 100L)
+  )
+)
+output <- OutputDataset(
+  "postgres://warehouse",
+  "analytics.daily_orders",
+  facets = list(schema = schema),
+  output_facets = list(
+    outputStatistics = OutputStatisticsOutputDatasetFacet(row_count = 100L)
+  )
+)
+```
+
+## Emit the lifecycle
+
+Emit `START`, optional `RUNNING`, and one terminal event. Terminal states are
+`COMPLETE`, `ABORT`, and `FAIL`.
+
+```{r}
+client$emit(RunEvent(
+  run,
+  job,
+  event_type = "START",
+  event_time = "2026-01-02T03:04:05.000Z",
+  inputs = list(input)
+))
+client$emit(RunEvent(
+  run,
+  job,
+  event_type = "RUNNING",
+  event_time = "2026-01-02T03:04:30.000Z",
+  inputs = list(input)
+))
+client$emit(RunEvent(
+  run,
+  job,
+  event_type = "COMPLETE",
+  event_time = "2026-01-02T03:05:00.000Z",
+  inputs = list(input),
+  outputs = list(output)
+))
+
+vapply(
+  transport$events,
+  \(event) as_openlineage_list(event)$eventType,
+  character(1)
+)
+to_openlineage_json(transport$events[[3]], pretty = TRUE)
+```
+
+## Add an extension facet
+
+Use `ol_facet()` when the backend supports a facet schema without a typed R
+constructor. Field names passed through `...` are preserved on the wire.
+
+```{r}
+quality <- ol_facet(
+  "https://example.com/facets/QualityRunFacet.json",
+  score = 0.98,
+  method = "rules"
+)
+extended_run <- Run(new_run_id(), facets = list(quality = quality))
+as_openlineage_list(extended_run)$facets$quality$score
+```
+
+## Configure delivery and authentication
+
+An explicit `transport` is best for tests and integrations. For HTTP delivery,
+provide `url` directly or set `OPENLINEAGE_URL`. The client also recognizes
+`OPENLINEAGE_ENDPOINT`, `OPENLINEAGE_API_KEY`, and `OPENLINEAGE_DISABLED`.
+Explicit constructor values take precedence over environment variables.
+
+These examples construct clients but do not emit, so they remain offline:
+
+```{r}
+bearer_client <- OpenLineageClient$new(
+  url = "https://lineage.example.com",
+  api_key = "replace-with-your-secret",
+  disabled = FALSE
+)
+header_client <- OpenLineageClient$new(
+  url = "https://lineage.example.com",
+  headers = c(`X-Tenant` = "analytics"),
+  disabled = FALSE
+)
+bearer_client
+header_client
+```
+
+API keys become bearer credentials. A custom `Authorization` header is also
+supported when `api_key` is absent. Never disable TLS verification outside a
+controlled development environment.
+
+## Handle failures
+
+Package conditions have stable classes that can be handled with `tryCatch()`.
+HTTP 401 and 403 responses use `openlineage_auth_error`; other HTTP failures
+use `openlineage_http_error`; delivery failures inherit from
+`openlineage_transport_error`.
+
+```{r}
+condition <- tryCatch(
+  client$emit("not a RunEvent"),
+  openlineage_error = identity
+)
+class(condition)
+conditionMessage(condition)
+```
+
+Configuration errors use `openlineage_config_error`, while invalid event,
+model, or facet values use `openlineage_validation_error`. Conditions and
+printed clients omit credentials.

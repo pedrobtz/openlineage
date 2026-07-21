@@ -1,0 +1,14 @@
+^openlineage\.Rproj$
+^\.Rproj\.user$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.github$
+^AGENTS\.md$
+^implementation\.md$
+^openlineage\.md$
+^python\.md$
+^roadmap\.md$
+^LICENSE\.md$
+^cran-comments\.md$
+^dev$

@@ -1,0 +1,32 @@
+Package: openlineage
+Title: Create and Emit 'OpenLineage' Events
+Version: 0.1.0
+Authors@R: 
+    person("Pedro", "Baltazar", , "pedrobtz@gmail.com", role = c("aut", "cre", "cph"))
+Description: Construct and validate run events that follow the 'OpenLineage'
+    specification <https://openlineage.io/>. Model run lifecycles, datasets,
+    and extensible facets with protocol-aware 'R' objects. Serialize events into
+    deterministic JavaScript Object Notation (JSON) while preserving wire
+    field names. Deliver events synchronously over Hypertext Transfer Protocol
+    (HTTP) with authentication and retries, or use offline transports for local
+    development and testing.
+License: MIT + file LICENSE
+Depends:
+    R (>= 4.1.0)
+Encoding: UTF-8
+Language: en-US
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0
+Suggests: 
+    knitr (>= 1.42),
+    rmarkdown (>= 2.20),
+    testthat (>= 3.2.2)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+Imports: 
+    cli (>= 3.0.0),
+    httr2 (>= 1.0.0),
+    jsonlite (>= 1.8.0),
+    R6 (>= 2.5.0),
+    S7 (>= 0.2.0),
+    uuid (>= 1.1-0)

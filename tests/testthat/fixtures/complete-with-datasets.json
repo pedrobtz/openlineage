@@ -1,0 +1,85 @@
+{
+  "eventTime": "2026-01-02T03:05:00.000Z",
+  "eventType": "COMPLETE",
+  "inputs": [
+    {
+      "facets": {
+        "schema": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/SchemaDatasetFacet.json#/$defs/SchemaDatasetFacet",
+          "fields": [
+            {
+              "fields": [],
+              "name": "id",
+              "type": "INTEGER"
+            }
+          ]
+        }
+      },
+      "inputFacets": {
+        "inputStatistics": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/InputStatisticsInputDatasetFacet.json#/$defs/InputStatisticsInputDatasetFacet",
+          "fileCount": 1,
+          "rowCount": 10,
+          "size": 1024
+        }
+      },
+      "name": "public.source",
+      "namespace": "postgres://warehouse"
+    }
+  ],
+  "job": {
+    "facets": {
+      "sql": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/SQLJobFacet.json#/$defs/SQLJobFacet",
+        "dialect": "ansi",
+        "query": "SELECT * FROM source"
+      }
+    },
+    "name": "transform",
+    "namespace": "example"
+  },
+  "outputs": [
+    {
+      "facets": {
+        "schema": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/SchemaDatasetFacet.json#/$defs/SchemaDatasetFacet",
+          "fields": [
+            {
+              "fields": [],
+              "name": "id",
+              "type": "INTEGER"
+            }
+          ]
+        }
+      },
+      "name": "analytics.result",
+      "namespace": "postgres://warehouse",
+      "outputFacets": {
+        "outputStatistics": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/OutputStatisticsOutputDatasetFacet.json#/$defs/OutputStatisticsOutputDatasetFacet",
+          "fileCount": 1,
+          "rowCount": 10,
+          "size": 512
+        }
+      }
+    }
+  ],
+  "producer": "https://github.com/pedrobtz/openlineage",
+  "run": {
+    "facets": {
+      "nominalTime": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-1/NominalTimeRunFacet.json#/$defs/NominalTimeRunFacet",
+        "nominalEndTime": "2026-01-02T04:00:00.000Z",
+        "nominalStartTime": "2026-01-02T03:00:00.000Z"
+      }
+    },
+    "runId": "019c0000-0000-7000-8000-000000000001"
+  },
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
+}
