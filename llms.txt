@@ -1,0 +1,189 @@
+# openlineage
+
+`openlineage` is an R client for constructing, validating, serializing,
+and emitting [OpenLineage](https://openlineage.io/) run events. It
+targets the OpenLineage 2.0.2 schema and supports synchronous HTTP
+delivery as well as offline transports for development and testing.
+
+## Installation
+
+Install the released package from CRAN with:
+
+``` r
+
+install.packages("openlineage")
+```
+
+## Quick start
+
+Use an accumulating transport to exercise a complete lifecycle without a
+server or network connection:
+
+``` r
+
+library(openlineage)
+
+transport <- AccumulatingTransport$new()
+client <- OpenLineageClient$new(transport = transport, disabled = FALSE)
+
+run <- Run(new_run_id())
+job <- Job("example", "daily-orders")
+
+client$emit(RunEvent(run, job, event_type = "START"))
+client$emit(RunEvent(run, job, event_type = "RUNNING"))
+client$emit(RunEvent(run, job, event_type = "COMPLETE"))
+
+length(transport$events)
+to_openlineage_json(transport$events[[3]], pretty = TRUE)
+```
+
+See
+[`vignette("openlineage-lifecycle")`](https://pedrobtz.github.io/openlineage/articles/openlineage-lifecycle.md)
+for datasets, facets, configuration, authentication, and failure
+handling.
+
+## HTTP delivery and authentication
+
+Create a client with an explicit endpoint. Constructing the client does
+not make a request; `emit()` performs synchronous delivery.
+
+``` r
+
+client <- OpenLineageClient$new(
+  url = "https://lineage.example.com",
+  api_key = "replace-with-your-secret",
+  timeout = 10,
+  max_retries = 3L
+)
+```
+
+`api_key` produces a bearer `Authorization` header. Backend-specific
+headers can instead be supplied as a named character vector through
+`headers`. Do not combine `api_key` with a custom `Authorization`
+header. Credentials are kept out of events, printed clients, and package
+conditions.
+
+The client recognizes these environment variables when the corresponding
+constructor value is absent:
+
+| Variable | Purpose |
+|----|----|
+| `OPENLINEAGE_URL` | HTTP server base URL |
+| `OPENLINEAGE_ENDPOINT` | Relative path; defaults to `api/v1/lineage` |
+| `OPENLINEAGE_API_KEY` | Bearer API key |
+| `OPENLINEAGE_DISABLED` | `true` selects no-op delivery; `false` enables emission |
+
+Explicit values take precedence over environment values. An injected
+transport ignores HTTP environment settings. With no transport or URL,
+events are printed through `ConsoleTransport`.
+
+## Facets and extensions
+
+Typed constructors cover common run, job, dataset, and statistics
+facets. Use
+[`ol_facet()`](https://pedrobtz.github.io/openlineage/reference/ol_facet.md)
+for a schema without a typed R constructor:
+
+``` r
+
+custom <- ol_facet(
+  "https://example.com/facets/QualityRunFacet.json",
+  score = 0.98,
+  method = "rules"
+)
+run <- Run(new_run_id(), facets = list(quality = custom))
+```
+
+Transport failures inherit from `openlineage_transport_error`. HTTP and
+authentication failures additionally use `openlineage_http_error` and
+`openlineage_auth_error`, respectively. Configuration and model failures
+use `openlineage_config_error` and `openlineage_validation_error`.
+
+# Package index
+
+## Overview
+
+- [`openlineage`](https://pedrobtz.github.io/openlineage/reference/openlineage-package.md)
+  [`openlineage-package`](https://pedrobtz.github.io/openlineage/reference/openlineage-package.md)
+  : Create and Emit OpenLineage Events
+
+## Events and models
+
+- [`RunEvent()`](https://pedrobtz.github.io/openlineage/reference/RunEvent.md)
+  : OpenLineage run event
+- [`RunState()`](https://pedrobtz.github.io/openlineage/reference/RunState.md)
+  : OpenLineage run state
+- [`Run()`](https://pedrobtz.github.io/openlineage/reference/Run.md) :
+  OpenLineage run
+- [`Job()`](https://pedrobtz.github.io/openlineage/reference/Job.md) :
+  OpenLineage job
+- [`Dataset()`](https://pedrobtz.github.io/openlineage/reference/datasets.md)
+  [`InputDataset()`](https://pedrobtz.github.io/openlineage/reference/datasets.md)
+  [`OutputDataset()`](https://pedrobtz.github.io/openlineage/reference/datasets.md)
+  : OpenLineage datasets
+
+## Facets
+
+- [`ol_facet()`](https://pedrobtz.github.io/openlineage/reference/ol_facet.md)
+  : Create a generic OpenLineage facet
+- [`NominalTimeRunFacet()`](https://pedrobtz.github.io/openlineage/reference/run_facets.md)
+  [`ParentRunFacet()`](https://pedrobtz.github.io/openlineage/reference/run_facets.md)
+  [`ErrorMessageRunFacet()`](https://pedrobtz.github.io/openlineage/reference/run_facets.md)
+  [`ProcessingEngineRunFacet()`](https://pedrobtz.github.io/openlineage/reference/run_facets.md)
+  : Typed run facets
+- [`SQLJobFacet()`](https://pedrobtz.github.io/openlineage/reference/job_facets.md)
+  [`SourceCodeLocationJobFacet()`](https://pedrobtz.github.io/openlineage/reference/job_facets.md)
+  [`EmissionPattern()`](https://pedrobtz.github.io/openlineage/reference/job_facets.md)
+  [`JobTypeJobFacet()`](https://pedrobtz.github.io/openlineage/reference/job_facets.md)
+  : Typed job facets
+- [`SchemaField()`](https://pedrobtz.github.io/openlineage/reference/dataset_facets.md)
+  [`SchemaDatasetFacet()`](https://pedrobtz.github.io/openlineage/reference/dataset_facets.md)
+  [`DatasourceDatasetFacet()`](https://pedrobtz.github.io/openlineage/reference/dataset_facets.md)
+  : Typed dataset facets
+- [`InputStatisticsInputDatasetFacet()`](https://pedrobtz.github.io/openlineage/reference/io_statistics_facets.md)
+  [`OutputStatisticsOutputDatasetFacet()`](https://pedrobtz.github.io/openlineage/reference/io_statistics_facets.md)
+  : Input and output statistics facets
+- [`ol_tag()`](https://pedrobtz.github.io/openlineage/reference/ol_tag.md)
+  : Create an OpenLineage tag
+- [`TagsJobFacet()`](https://pedrobtz.github.io/openlineage/reference/tags_facets.md)
+  [`TagsRunFacet()`](https://pedrobtz.github.io/openlineage/reference/tags_facets.md)
+  [`TagsDatasetFacet()`](https://pedrobtz.github.io/openlineage/reference/tags_facets.md)
+  : Typed tags facets
+
+## Serialization
+
+- [`as_openlineage_list()`](https://pedrobtz.github.io/openlineage/reference/as_openlineage_list.md)
+  : Convert an OpenLineage value to its wire representation
+- [`to_openlineage_json()`](https://pedrobtz.github.io/openlineage/reference/to_openlineage_json.md)
+  : Serialize an OpenLineage value to JSON
+
+## Client and transports
+
+- [`OpenLineageClient`](https://pedrobtz.github.io/openlineage/reference/OpenLineageClient.md)
+  : OpenLineage client
+- [`local_transports`](https://pedrobtz.github.io/openlineage/reference/local_transports.md)
+  [`AccumulatingTransport`](https://pedrobtz.github.io/openlineage/reference/local_transports.md)
+  [`ConsoleTransport`](https://pedrobtz.github.io/openlineage/reference/local_transports.md)
+  [`NoopTransport`](https://pedrobtz.github.io/openlineage/reference/local_transports.md)
+  : Local OpenLineage transports
+- [`HttpTransport`](https://pedrobtz.github.io/openlineage/reference/HttpTransport.md)
+  : Synchronous HTTP transport
+
+## Event utilities
+
+- [`new_run_id()`](https://pedrobtz.github.io/openlineage/reference/new_run_id.md)
+  : Generate a run identifier
+- [`new_event_time()`](https://pedrobtz.github.io/openlineage/reference/new_event_time.md)
+  : Format an OpenLineage event time
+- [`OPENLINEAGE_SCHEMA_VERSION`](https://pedrobtz.github.io/openlineage/reference/openlineage_constants.md)
+  [`OPENLINEAGE_SCHEMA_URL`](https://pedrobtz.github.io/openlineage/reference/openlineage_constants.md)
+  [`OPENLINEAGE_RUN_EVENT_SCHEMA_URL`](https://pedrobtz.github.io/openlineage/reference/openlineage_constants.md)
+  [`OPENLINEAGE_PRODUCER`](https://pedrobtz.github.io/openlineage/reference/openlineage_constants.md)
+  : OpenLineage protocol constants
+
+# Articles
+
+### Workflows
+
+- [Emit an OpenLineage Run
+  Lifecycle](https://pedrobtz.github.io/openlineage/articles/openlineage-lifecycle.md):
