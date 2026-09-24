@@ -4,7 +4,6 @@
 [![PackageVersion](https://www.r-pkg.org/badges/version/openlineage)](https://www.r-pkg.org/pkg/openlineage)
 [![R-CMD-check](https://github.com/pedrobtz/openlineage/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pedrobtz/openlineage/actions/workflows/R-CMD-check.yaml)
 [![coverage](https://raw.githubusercontent.com/pedrobtz/openlineage/main/.github/badges/coverage.svg)](https://github.com/pedrobtz/openlineage/actions/workflows/coverage.yaml)
-
 <!-- badges: end -->
 
 `openlineage` is an R client for constructing, validating, serializing, and
@@ -18,6 +17,13 @@ Install the released package from CRAN with:
 
 ```r
 install.packages("openlineage")
+```
+
+Or install the development version from GitHub:
+
+```r
+# install.packages("pak")
+pak::pak("pedrobtz/openlineage")
 ```
 
 ## Quick start
@@ -42,8 +48,43 @@ length(transport$events)
 to_openlineage_json(transport$events[[3]], pretty = TRUE)
 ```
 
-See `vignette("openlineage-lifecycle")` for datasets, facets, configuration,
-authentication, and failure handling.
+## Datasets
+
+Input and output datasets carry their own facets. Typed constructors exist
+for schema, datasource, statistics and tag facets:
+
+```r
+schema <- SchemaDatasetFacet(list(
+  SchemaField("order_id", "INTEGER", ordinal_position = 1L),
+  SchemaField("amount", "DECIMAL", ordinal_position = 2L)
+))
+
+input <- InputDataset(
+  "postgres://warehouse",
+  "raw.orders",
+  facets = list(schema = schema)
+)
+output <- OutputDataset(
+  "postgres://warehouse",
+  "analytics.daily_orders",
+  facets = list(schema = schema),
+  output_facets = list(
+    outputStatistics = OutputStatisticsOutputDatasetFacet(row_count = 100L)
+  )
+)
+
+client$emit(RunEvent(
+  run, job,
+  event_type = "COMPLETE",
+  inputs = list(input),
+  outputs = list(output)
+))
+```
+
+See `vignette("openlineage-lifecycle")` for the full lifecycle, including
+run, job and dataset facets, configuration, authentication, and failure
+handling. The reference documentation is at
+<https://pedrobtz.github.io/openlineage/>.
 
 ## HTTP delivery and authentication
 
