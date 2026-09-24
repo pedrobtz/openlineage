@@ -11,6 +11,8 @@ Description: Construct and validate run events that follow the 'OpenLineage'
     (HTTP) with authentication and retries, or use offline transports for local
     development and testing.
 License: MIT + file LICENSE
+URL: https://github.com/pedrobtz/openlineage, https://pedrobtz.github.io/openlineage/
+BugReports: https://github.com/pedrobtz/openlineage/issues
 Depends:
     R (>= 4.1.0)
 Encoding: UTF-8
