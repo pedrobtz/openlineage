@@ -100,7 +100,7 @@ ParentRunFacet(parent_run, parent_job)
 #>  @ schema_url: chr "https://openlineage.io/spec/facets/1-2-0/ParentRunFacet.json#/$defs/ParentRunFacet"
 #>  @ deleted   : NULL
 #>  @ run       : <openlineage::Run>
-#>  .. @ run_id: chr "8931fa43-f1be-49ed-a7de-c1149f6aa56d"
+#>  .. @ run_id: chr "2061af75-9017-4688-b234-5f7ea64481c8"
 #>  .. @ facets: Named list()
 #>  @ job       : <openlineage::Job>
 #>  .. @ namespace: chr "example"

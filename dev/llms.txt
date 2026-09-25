@@ -14,6 +14,14 @@ Install the released package from CRAN with:
 install.packages("openlineage")
 ```
 
+Or install the development version from GitHub:
+
+``` r
+
+# install.packages("pak")
+pak::pak("pedrobtz/openlineage")
+```
+
 ## Quick start
 
 Use an accumulating transport to exercise a complete lifecycle without a
@@ -37,10 +45,45 @@ length(transport$events)
 to_openlineage_json(transport$events[[3]], pretty = TRUE)
 ```
 
+## Datasets
+
+Input and output datasets carry their own facets. Typed constructors
+exist for schema, datasource, statistics and tag facets:
+
+``` r
+
+schema <- SchemaDatasetFacet(list(
+  SchemaField("order_id", "INTEGER", ordinal_position = 1L),
+  SchemaField("amount", "DECIMAL", ordinal_position = 2L)
+))
+
+input <- InputDataset(
+  "postgres://warehouse",
+  "raw.orders",
+  facets = list(schema = schema)
+)
+output <- OutputDataset(
+  "postgres://warehouse",
+  "analytics.daily_orders",
+  facets = list(schema = schema),
+  output_facets = list(
+    outputStatistics = OutputStatisticsOutputDatasetFacet(row_count = 100L)
+  )
+)
+
+client$emit(RunEvent(
+  run, job,
+  event_type = "COMPLETE",
+  inputs = list(input),
+  outputs = list(output)
+))
+```
+
 See
 [`vignette("openlineage-lifecycle")`](https://pedrobtz.github.io/openlineage/dev/articles/openlineage-lifecycle.md)
-for datasets, facets, configuration, authentication, and failure
-handling.
+for the full lifecycle, including run, job and dataset facets,
+configuration, authentication, and failure handling. The reference
+documentation is at <https://pedrobtz.github.io/openlineage/>.
 
 ## HTTP delivery and authentication
 
