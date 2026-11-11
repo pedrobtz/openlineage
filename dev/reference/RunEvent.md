@@ -69,7 +69,7 @@ RunEvent(
 )
 #> <openlineage::RunEvent>
 #>  @ run       : <openlineage::Run>
-#>  .. @ run_id: chr "e7361fe3-2cc7-4bdb-9945-0ccbf8b8b295"
+#>  .. @ run_id: chr "589644be-6599-474e-9de4-fd060c5460e2"
 #>  .. @ facets: Named list()
 #>  @ job       : <openlineage::Job>
 #>  .. @ namespace: chr "example-scheduler"
