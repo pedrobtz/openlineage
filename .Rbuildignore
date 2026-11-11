@@ -13,3 +13,8 @@
 ^cran-comments\.md$
 ^dev$
 ^CRAN-SUBMISSION$
+^\.agents$
+^\.superpowers$
+^\.worktrees$
+^\.claude$
+^CLAUDE\.md$
