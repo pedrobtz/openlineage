@@ -27,6 +27,6 @@ A `Run` S7 object.
 ``` r
 Run(new_run_id())
 #> <openlineage::Run>
-#>  @ run_id: chr "4de16d97-c952-4d39-9848-5119b18a07cb"
+#>  @ run_id: chr "fb60f91d-71b1-4dde-ac49-f36f24e628bd"
 #>  @ facets: Named list()
 ```
