@@ -3,7 +3,7 @@
 <!-- badges: start -->
 [![PackageVersion](https://www.r-pkg.org/badges/version/openlineage)](https://www.r-pkg.org/pkg/openlineage)
 [![R-CMD-check](https://github.com/pedrobtz/openlineage/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pedrobtz/openlineage/actions/workflows/R-CMD-check.yaml)
-[![coverage](https://raw.githubusercontent.com/pedrobtz/openlineage/main/.github/badges/coverage.svg)](https://github.com/pedrobtz/openlineage/actions/workflows/coverage.yaml)
+[![coverage](https://raw.githubusercontent.com/pedrobtz/openlineage/gh-pages/badges/coverage.svg)](https://github.com/pedrobtz/openlineage/actions/workflows/coverage.yaml)
 <!-- badges: end -->
 
 `openlineage` is an R client for constructing, validating, serializing, and
