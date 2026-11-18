@@ -17,5 +17,5 @@ A single UUID string.
 
 ``` r
 new_run_id()
-#> [1] "04154574-81fe-4bfc-aa59-31b674892993"
+#> [1] "7f8fecc8-b2b6-4a14-afb8-2074c89805f8"
 ```

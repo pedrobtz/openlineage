@@ -183,6 +183,10 @@ use `openlineage_config_error` and `openlineage_validation_error`.
   [`SchemaDatasetFacet()`](https://pedrobtz.github.io/openlineage/dev/reference/dataset_facets.md)
   [`DatasourceDatasetFacet()`](https://pedrobtz.github.io/openlineage/dev/reference/dataset_facets.md)
   : Typed dataset facets
+- [`ColumnLineageTransformation()`](https://pedrobtz.github.io/openlineage/dev/reference/column_lineage_facets.md)
+  [`ColumnLineageInputField()`](https://pedrobtz.github.io/openlineage/dev/reference/column_lineage_facets.md)
+  [`ColumnLineageDatasetFacet()`](https://pedrobtz.github.io/openlineage/dev/reference/column_lineage_facets.md)
+  : Column-lineage dataset facet
 - [`InputStatisticsInputDatasetFacet()`](https://pedrobtz.github.io/openlineage/dev/reference/io_statistics_facets.md)
   [`OutputStatisticsOutputDatasetFacet()`](https://pedrobtz.github.io/openlineage/dev/reference/io_statistics_facets.md)
   : Input and output statistics facets
