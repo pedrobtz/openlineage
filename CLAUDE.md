@@ -46,7 +46,7 @@ OpenLineage schema 2.0.2 (`OPENLINEAGE_SCHEMA_VERSION`).
 Implemented: S7 models for run states, runs, jobs, datasets and run events;
 typed core facets (nominal time, parent run, error message, processing
 engine, schema, data source, SQL, source code location, job type, input and
-output statistics, tags) and generic facets; deterministic JSON
+output statistics, tags, column lineage) and generic facets; deterministic JSON
 serialization; UUID and event-time helpers; console, no-op and accumulating
 local transports; a synchronous HTTP transport; and the R6
 `OpenLineageClient`. Not implemented: asynchronous or batched delivery, and

@@ -100,7 +100,15 @@
     )
   }
 
-  c(base, .ol_mapped_properties(x, mapping))
+  fields <- .ol_mapped_properties(x, mapping)
+  converters <- .ol_facet_wire_values[[class_name]]
+  for (wire_name in names(converters)) {
+    if (!is.null(fields[[wire_name]])) {
+      fields[[wire_name]] <- converters[[wire_name]](fields[[wire_name]])
+    }
+  }
+
+  c(base, fields)
 }
 
 .ol_record_fields <- function(x) {

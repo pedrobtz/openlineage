@@ -23,6 +23,7 @@ reference:
   - run_facets
   - job_facets
   - dataset_facets
+  - column_lineage_facets
   - io_statistics_facets
   - ol_tag
   - tags_facets
