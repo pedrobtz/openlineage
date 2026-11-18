@@ -1,0 +1,20 @@
+# Caller for pedrobtz/r-actions, copied from its examples/cran-release.yml.
+# Tags each CRAN submission and opens the development-version bump. Commit
+# CRAN-SUBMISSION after `devtools::submit_cran()`; merging that commit to main
+# is the whole release step. CRAN-SUBMISSION stays in .Rbuildignore, never in
+# .gitignore.
+on:
+  push:
+    paths: [CRAN-SUBMISSION]
+  workflow_dispatch:
+
+name: cran-release.yaml
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  cran-release:
+    # Pinned to a commit rather than @v1 because this job holds a write token.
+    uses: pedrobtz/r-actions/.github/workflows/cran-release.yml@ae59a2805e622e9ba0f3e902bc5f39eba33c6670 # v1.45.1
