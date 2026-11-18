@@ -42,7 +42,7 @@ facet <- ol_facet(
 )
 Run(new_run_id(), facets = list(custom = facet))
 #> <openlineage::Run>
-#>  @ run_id: chr "ad892edd-7929-4a7a-a1b6-f358844504f0"
+#>  @ run_id: chr "f3bf4a01-35fa-4a31-b048-d941838b7e42"
 #>  @ facets:List of 1
 #>  .. $ custom: <openlineage::GenericFacet>
 #>  ..  ..@ producer  : chr "https://github.com/pedrobtz/openlineage"
