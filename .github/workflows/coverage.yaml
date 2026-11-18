@@ -1,15 +1,30 @@
+# Caller for pedrobtz/r-actions, copied from its examples/coverage.yml.
 on:
-  # No `push:`: a pull request already checks its merge with main,
-  # and the schedule checks main (r-actions README, "Pushes to main").
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  # Weekly on main, in openlineage's Saturday slot, rather than on every push
+  # to it, and on demand; the badge follows.
   schedule:
     - cron: "4 11 * * 6"
   workflow_dispatch:
-  pull_request:
 
-name: coverage.yaml
+name: coverage
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   coverage:
-    uses: pedrobtz/r-actions/.github/workflows/coverage.yml@v1
+    # Decided without a runner.
+    if: >-
+      github.event_name != 'pull_request'
+      || contains(github.event.pull_request.labels.*.name, 'full-ci')
+      || !(contains(github.event.pull_request.labels.*.name, 'ci:docs')
+        || contains(github.event.pull_request.labels.*.name, 'ci:minimal')
+        || contains(github.event.pull_request.labels.*.name, 'skip-ci:coverage'))
+    # Pinned to a commit rather than @v1 because this job holds a write token:
+    # it commits the badge to badges/coverage.svg on gh-pages.
+    uses: pedrobtz/r-actions/.github/workflows/coverage.yml@ae59a2805e622e9ba0f3e902bc5f39eba33c6670 # v1.45.1
     permissions:
       contents: write

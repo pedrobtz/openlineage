@@ -52,14 +52,8 @@ local transports; a synchronous HTTP transport; and the R6
 `OpenLineageClient`. Not implemented: asynchronous or batched delivery, and
 transports other than HTTP (for example Kafka or file).
 
-Gaps from the shared rules, as of 2026-11-11:
+Gaps from the shared rules, as of 2026-11-18:
 
-- `R-CMD-check.yaml` is the hand-rolled r-lib template, not a call to
-  `pedrobtz/r-actions`, so it does not count as the pre-submission check.
-  Issue [#8](https://github.com/pedrobtz/openlineage/issues/8) tracks the
-  move. `coverage.yaml` calls r-actions' `coverage.yml` at `@v1`, not at a
-  commit pin, although it holds a write token.
-- No `cran-release.yaml`; the `.9000` bump was a hand-made pull request.
 - No `.agents/assurance.md`.
 - `cran-comments.md` still lists a local macOS check as its test
   environment, not CI legs.
@@ -171,11 +165,17 @@ Deviation: `README.md` is the source; there is no `README.Rmd`.
 
 ## Continuous integration
 
-- `R-CMD-check.yaml`: the r-lib template matrix, macOS and Windows release
-  and Ubuntu devel, release and oldrel-1, built with
-  `--compact-vignettes=gs+qpdf`. No CRAN-like containers and no
-  `nosuggests` leg (see Current state).
-- `coverage.yaml`: calls r-actions' `coverage.yml@v1`;
-  `.github/badges/coverage.svg` is the badge.
-- `pkgdown.yaml`: the r-lib template, deploying to `gh-pages` with
-  `clean: false`.
+All callers are copied from `pedrobtz/r-actions` `examples/`; there are no
+package-own workflows.
+
+- `R-CMD-check.yaml`: calls `r-cmd-check.yml@v1` with `profile: auto`
+  (quick on pull requests, full on the Saturday 10:34 UTC schedule, on
+  dispatch and on `full-ci`). Pure R, so the CRAN-compiler containers are
+  turned off (`containers: '[]'`).
+- `coverage.yaml`: calls `coverage.yml` pinned to a commit (write token);
+  the badge is `badges/coverage.svg` on `gh-pages`.
+- `pkgdown.yaml`: calls `pkgdown.yml@v1`, deploying from `main` and from
+  releases.
+- `cran-release.yaml`: calls `cran-release.yml` pinned to a commit. A push
+  of `CRAN-SUBMISSION` tags the version, publishes the GitHub release and
+  opens the `.9000` bump pull request.
