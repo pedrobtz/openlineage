@@ -1,0 +1,62 @@
+{
+  "_producer": "https://github.com/pedrobtz/openlineage",
+  "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json#/$defs/ColumnLineageDatasetFacet",
+  "dataset": [
+    {
+      "field": "active",
+      "name": "public.customers",
+      "namespace": "postgres://warehouse",
+      "transformations": [
+        {
+          "description": "WHERE active",
+          "subtype": "FILTER",
+          "type": "INDIRECT"
+        }
+      ]
+    },
+    {
+      "field": "customer_id",
+      "name": "public.orders",
+      "namespace": "postgres://warehouse",
+      "transformations": []
+    }
+  ],
+  "fields": {
+    "customer_id": {
+      "inputFields": [
+        {
+          "field": "id",
+          "name": "public.customers",
+          "namespace": "postgres://warehouse",
+          "transformations": [
+            {
+              "masking": false,
+              "subtype": "IDENTITY",
+              "type": "DIRECT"
+            }
+          ]
+        }
+      ]
+    },
+    "email_hash": {
+      "inputFields": [
+        {
+          "field": "email",
+          "name": "public.customers",
+          "namespace": "postgres://warehouse",
+          "transformations": [
+            {
+              "description": "sha256(email)",
+              "masking": true,
+              "subtype": "TRANSFORMATION",
+              "type": "DIRECT"
+            }
+          ]
+        }
+      ]
+    },
+    "loaded_at": {
+      "inputFields": []
+    }
+  }
+}
