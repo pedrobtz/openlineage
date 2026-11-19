@@ -135,6 +135,17 @@
   api_key
 }
 
+.ol_http_framing_headers <- c(
+  "content-length",
+  "transfer-encoding",
+  "host",
+  "connection",
+  "expect",
+  "te",
+  "trailer",
+  "upgrade"
+)
+
 .ol_normalize_http_headers <- function(headers, call = parent.frame()) {
   if (!is.character(headers) || anyNA(headers)) {
     .ol_http_config_abort(
@@ -165,6 +176,19 @@
   if (any(tolower(header_names) == "content-type")) {
     .ol_http_config_abort(
       "`Content-Type` is managed by `HttpTransport` and cannot be customized.",
+      call = call
+    )
+  }
+  # Headers that frame or route the request belong to curl: a custom
+  # `Content-Length` truncates the body the server reads.
+  framing <- header_names[tolower(header_names) %in% .ol_http_framing_headers]
+  if (length(framing) > 0L) {
+    .ol_http_config_abort(
+      paste0(
+        "`headers` must not set ",
+        paste0("`", framing, "`", collapse = ", "),
+        ", which curl manages."
+      ),
       call = call
     )
   }
@@ -339,41 +363,74 @@
   Sys.time()
 }
 
-# An IMF-fixdate (RFC 9110, section 5.6.7), such as
-# `Wed, 18 Nov 2026 14:48:30 GMT`. Month names are matched against the
-# English `month.abb`, since `strptime()`'s `%b` depends on the locale.
+# An HTTP-date (RFC 9110, section 5.6.7) in any of the three forms a
+# recipient must accept:
+#
+# * IMF-fixdate: `Wed, 18 Nov 2026 14:48:30 GMT`
+# * RFC 850: `Wednesday, 18-Nov-26 14:48:30 GMT`
+# * asctime: `Wed Nov 18 14:48:30 2026`, the day possibly space-padded
+#
+# Month names are matched against the English `month.abb`, since
+# `strptime()`'s `%b` depends on the locale.
 .ol_http_parse_date <- function(value) {
   if (is.null(value)) {
     return(NULL)
   }
-  parts <- regmatches(
-    value,
-    regexec(
-      paste0(
-        "^[A-Za-z]{3}, ([0-9]{2}) ([A-Za-z]{3}) ([0-9]{4}) ",
-        "([0-9]{2}):([0-9]{2}):([0-9]{2}) GMT$"
-      ),
-      trimws(value)
+  value <- trimws(value)
+  time <- "([0-9]{2}):([0-9]{2}):([0-9]{2})"
+  forms <- list(
+    imf = paste0(
+      "^[A-Za-z]{3}, ([0-9]{2}) ([A-Za-z]{3}) ([0-9]{4}) ",
+      time,
+      " GMT$"
+    ),
+    rfc850 = paste0(
+      "^[A-Za-z]+, ([0-9]{2})-([A-Za-z]{3})-([0-9]{2}) ",
+      time,
+      " GMT$"
+    ),
+    asctime = paste0(
+      "^[A-Za-z]{3} ([A-Za-z]{3}) ([ 0-9][0-9]) ",
+      time,
+      " ([0-9]{4})$"
     )
-  )[[1L]]
-  if (length(parts) == 0L) {
-    return(NULL)
-  }
-  month <- match(parts[[3L]], month.abb)
-  if (is.na(month)) {
-    return(NULL)
-  }
-  numbers <- as.integer(parts[c(4L, 2L, 5L, 6L, 7L)])
-  time <- ISOdatetime(
-    numbers[[1L]],
-    month,
-    numbers[[2L]],
-    numbers[[3L]],
-    numbers[[4L]],
-    numbers[[5L]],
-    tz = "UTC"
   )
-  if (is.na(time)) NULL else time
+
+  for (form in names(forms)) {
+    parts <- regmatches(value, regexec(forms[[form]], value))[[1L]][-1L]
+    if (length(parts) == 0L) {
+      next
+    }
+    fields <- switch(
+      form,
+      imf = list(day = 1L, month = 2L, year = 3L, clock = 4:6),
+      rfc850 = list(day = 1L, month = 2L, year = 3L, clock = 4:6),
+      asctime = list(day = 2L, month = 1L, year = 6L, clock = 3:5)
+    )
+    year <- as.integer(parts[[fields$year]])
+    if (form == "rfc850") {
+      # A two-digit year more than 50 years ahead is in the past century.
+      current <- as.POSIXlt(.ol_http_now(), tz = "UTC")$year + 1900L
+      year <- 2000L + year
+      if (year > current + 50L) {
+        year <- year - 100L
+      }
+    }
+    month <- match(parts[[fields$month]], month.abb)
+    clock <- as.integer(parts[fields$clock])
+    parsed <- ISOdatetime(
+      year,
+      month,
+      as.integer(trimws(parts[[fields$day]])),
+      clock[[1L]],
+      clock[[2L]],
+      clock[[3L]],
+      tz = "UTC"
+    )
+    return(if (is.na(parsed)) NULL else parsed)
+  }
+
+  NULL
 }
 
 # Seconds to wait from a `Retry-After` header, or `NULL` when it is absent or
@@ -614,7 +671,10 @@ HttpTransport <- R6Class(
         httr2::req_timeout(private$timeout) |>
         httr2::req_options(followlocation = 0L) |>
         httr2::req_body_raw(body, type = "application/json") |>
-        httr2::req_error(is_error = \(response) FALSE)
+        httr2::req_error(is_error = \(response) FALSE) |>
+        # Without a policy, httr2 still reads `Retry-After` itself on 429 and
+        # 503, and fails on a date with no `Date` header. The package retries.
+        httr2::req_retry(max_tries = 1, is_transient = \(response) FALSE)
 
       if (!private$verify_tls) {
         request <- httr2::req_options(request, ssl_verifypeer = 0)

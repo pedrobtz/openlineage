@@ -178,3 +178,11 @@
       Error:
       ! `endpoint` must not contain whitespace or control characters.
 
+# framing and routing headers are rejected (#62)
+
+    Code
+      HttpTransport$new("https://example.com", headers = c(`Content-Length` = "5"))
+    Condition
+      Error:
+      ! `headers` must not set `Content-Length`, which curl manages.
+

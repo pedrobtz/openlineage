@@ -665,3 +665,139 @@ test_that("a serialization failure in emit() sends nothing and keeps its cause (
     conditionMessage(condition$parent)
   )
 })
+
+test_that("httr2 is told not to judge transient responses itself (#61)", {
+  captured <- new.env(parent = emptyenv())
+  httr2::local_mocked_responses(function(req) {
+    captured$request <- req
+    http_mock_response(204L, req)
+  })
+
+  HttpTransport$new("https://example.com")$emit(http_transport_event())
+
+  # The mock bypasses httr2's retry machinery, so assert the policy that
+  # stops httr2 from parsing `Retry-After` on a real 429 or 503.
+  policies <- captured$request$policies
+  response <- httr2::response(
+    503L,
+    headers = list(`Retry-After` = "Wed, 18 Nov 2026 14:48:30 GMT")
+  )
+  expect_identical(policies$retry_max_tries, 1)
+  expect_false(policies$retry_is_transient(response))
+  expect_false(isTRUE(policies$retry_on_failure))
+})
+
+test_that("framing and routing headers are rejected (#62)", {
+  names <- c(
+    "Content-Length",
+    "content-length",
+    "Transfer-Encoding",
+    "Host",
+    "Connection",
+    "Expect",
+    "TE",
+    "Trailer",
+    "Upgrade"
+  )
+
+  for (name in names) {
+    expect_error(
+      HttpTransport$new(
+        "https://example.com",
+        headers = stats::setNames("5", name)
+      ),
+      class = "openlineage_config_error",
+      info = name
+    )
+  }
+  expect_snapshot(
+    error = TRUE,
+    HttpTransport$new(
+      "https://example.com",
+      headers = c(`Content-Length` = "5")
+    )
+  )
+})
+
+test_that("invalid header names are rejected (#69)", {
+  for (name in c("Bad Header", "X:Y", "X\nY", "é", "")) {
+    expect_error(
+      HttpTransport$new(
+        "https://example.com",
+        headers = stats::setNames("v", name)
+      ),
+      class = "openlineage_config_error",
+      info = name
+    )
+  }
+  expect_error(
+    HttpTransport$new("https://example.com", headers = c("v")),
+    class = "openlineage_config_error"
+  )
+})
+
+test_that("Retry-After accepts all three HTTP-date forms (#67)", {
+  date <- "Wed, 18 Nov 2026 14:48:00 GMT"
+  forms <- c(
+    "Wed, 18 Nov 2026 14:48:30 GMT",
+    "Wednesday, 18-Nov-26 14:48:30 GMT",
+    "Wed Nov 18 14:48:30 2026"
+  )
+
+  for (form in forms) {
+    expect_identical(
+      retry_delays(list(status_with(`Retry-After` = form, Date = date))),
+      30,
+      info = form
+    )
+  }
+  expect_identical(
+    retry_delays(list(status_with(
+      `Retry-After` = "Wed, 18 Nov 2026 14:48:30 GMT",
+      Date = "Wednesday, 18-Nov-26 14:48:20 GMT"
+    ))),
+    10
+  )
+  expect_identical(
+    retry_delays(list(status_with(
+      `Retry-After` = "Sun Nov  8 00:00:10 2026",
+      Date = "Sun, 08 Nov 2026 00:00:00 GMT"
+    ))),
+    10
+  )
+})
+
+test_that("RFC 850 two-digit years more than 50 years ahead are past (#67)", {
+  testthat::local_mocked_bindings(
+    .ol_http_now = function() as.POSIXct("2026-11-18", tz = "UTC"),
+    .package = "openlineage"
+  )
+
+  expect_identical(
+    format(.ol_http_parse_date("Sunday, 06-Nov-94 08:49:37 GMT")),
+    "1994-11-06 08:49:37"
+  )
+  expect_identical(
+    format(.ol_http_parse_date("Monday, 06-Nov-76 08:49:37 GMT")),
+    "2076-11-06 08:49:37"
+  )
+  expect_identical(
+    format(.ol_http_parse_date("Tuesday, 06-Nov-77 08:49:37 GMT")),
+    "1977-11-06 08:49:37"
+  )
+})
+
+test_that("impossible HTTP dates fall back to back-off (#67)", {
+  for (header in c(
+    "Wed, 31 Feb 2026 14:48:30 GMT",
+    "Wed, 18 Nov 2026 25:00:00 GMT",
+    "Wednesday, 31-Feb-26 14:48:30 GMT",
+    "Wed Feb 31 14:48:30 2026"
+  )) {
+    expect_identical(
+      retry_delays(list(status_with(`Retry-After` = header))),
+      1,
+      info = header
+    )
+  }
+})
