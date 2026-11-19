@@ -16,3 +16,11 @@
       Error:
       ! Every element of `fields$a` must be a `ColumnLineageInputField` object.
 
+# braces in column names are text, not code (#24)
+
+    Code
+      ColumnLineageDatasetFacet(list(`{1+1}` = NULL))
+    Condition
+      Error:
+      ! `fields${1+1}` must be an unnamed list, not `NULL`.
+

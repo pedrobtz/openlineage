@@ -115,3 +115,51 @@ test_that("facet maps require unique non-empty names", {
     Job("example", "task", facets = list(a = 1, a = 2))
   )
 })
+
+test_that("RunEvent setters enforce dataset roles and accept states (#25)", {
+  event <- RunEvent(
+    Run(fixture_run_id()),
+    Job("example", "task"),
+    event_time = new_event_time(fixture_event_time())
+  )
+
+  expect_error(
+    event@inputs <- list(Job("a", "b"), 1),
+    class = "openlineage_validation_error"
+  )
+  expect_error(
+    event@outputs <- list(InputDataset("a", "b")),
+    class = "openlineage_validation_error"
+  )
+  expect_error(
+    event@inputs <- list(Dataset("a", "b")),
+    class = "openlineage_validation_error"
+  )
+  event@inputs <- list(InputDataset("a", "b"))
+  event@event_type <- "COMPLETE"
+  expect_identical(as_openlineage_list(event)$eventType, "COMPLETE")
+  expect_identical(as_openlineage_list(event)$inputs[[1L]]$name, "b")
+  expect_error(
+    event@event_type <- "DONE",
+    class = "openlineage_validation_error"
+  )
+})
+
+test_that("facet-map setters accept list() and write {} (#25)", {
+  run <- Run(fixture_run_id(), facets = NULL)
+  job <- Job("example", "task")
+  input <- InputDataset("a", "b")
+
+  run@facets <- list()
+  job@facets <- list()
+  input@input_facets <- list()
+
+  expect_match(to_openlineage_json(run), '"facets":{}', fixed = TRUE)
+  expect_match(to_openlineage_json(job), '"facets":{}', fixed = TRUE)
+  expect_match(to_openlineage_json(input), '"inputFacets":{}', fixed = TRUE)
+  expect_error(run@facets <- list(1), class = "openlineage_validation_error")
+  expect_error(
+    run@facets <- list(sql = SQLJobFacet("SELECT 1")),
+    class = "openlineage_validation_error"
+  )
+})
