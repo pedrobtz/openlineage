@@ -1,3 +1,45 @@
+# invalid HTTP events fail before making a request
+
+    Code
+      transport$emit("serialized JSON")
+    Condition
+      Error:
+      ! `event` must be a `RunEvent` object.
+
+# authentication failures are classified and never retried
+
+    Code
+      HttpTransport$new("https://example.com")$emit(http_transport_event())
+    Condition
+      Error:
+      ! OpenLineage authentication failed with HTTP 401.
+
+# exhausted low-level failures keep their cause, not credentials (#26)
+
+    Code
+      transport$emit(http_transport_event())
+    Condition
+      Error:
+      ! OpenLineage HTTP request failed before receiving a response.
+      Caused by: Could not resolve host: example.com
+
+# HTTP retries are bounded
+
+    Code
+      attempts <- 0L
+      transport$emit(http_transport_event())
+    Condition
+      Error:
+      ! OpenLineage server returned HTTP 503.
+
+# disabling TLS verification warns and configures curl
+
+    Code
+      invisible(HttpTransport$new("https://example.com", verify_tls = FALSE))
+    Condition
+      Warning:
+      TLS certificate verification is disabled. Use this only in a controlled development environment.
+
 # HTTP configuration rejects unsafe or conflicting values
 
     Code
@@ -78,7 +120,7 @@
       HttpTransport$new("https://example.com", timeout = 0)
     Condition
       Error:
-      ! `timeout` must be greater than zero.
+      ! `timeout` must be a number of seconds between 0.001 and 2147483.
 
 ---
 
@@ -104,44 +146,35 @@
       Error:
       ! `verify_tls` must be `TRUE` or `FALSE`.
 
-# disabling TLS verification warns and configures curl
-
-    Code
-      invisible(HttpTransport$new("https://example.com", verify_tls = FALSE))
-    Condition
-      Warning:
-      TLS certificate verification is disabled. Use this only in a controlled development environment.
-
-# invalid HTTP events fail before making a request
-
-    Code
-      transport$emit("serialized JSON")
-    Condition
-      Error:
-      ! `event` must be a `RunEvent` object.
-
-# HTTP retries are bounded
-
-    Code
-      attempts <- 0L
-      transport$emit(http_transport_event())
-    Condition
-      Error:
-      ! OpenLineage server returned HTTP 503.
-
-# authentication failures are classified and never retried
-
-    Code
-      HttpTransport$new("https://example.com")$emit(http_transport_event())
-    Condition
-      Error:
-      ! OpenLineage authentication failed with HTTP 401.
-
-# exhausted low-level failures are sanitized
+# redirects are not followed and raise a classed error (#21)
 
     Code
       transport$emit(http_transport_event())
     Condition
       Error:
-      ! OpenLineage HTTP request failed before receiving a response.
+      ! OpenLineage server returned HTTP 308; redirects are not followed.
+
+# timeout is bounded at construction (#27)
+
+    Code
+      HttpTransport$new("https://example.com", timeout = 1e-05)
+    Condition
+      Error:
+      ! `timeout` must be a number of seconds between 0.001 and 2147483.
+
+# URL and endpoint values that change the path are rejected (#28)
+
+    Code
+      HttpTransport$new("http://host", endpoint = "api/%2e%2e/admin")
+    Condition
+      Error:
+      ! `endpoint` must be a non-empty relative path without `.` or `..` segments.
+
+---
+
+    Code
+      HttpTransport$new("http://host", endpoint = "a b")
+    Condition
+      Error:
+      ! `endpoint` must not contain whitespace or control characters.
 
