@@ -10,10 +10,20 @@ a custom `Authorization` header is an error. All custom headers are
 redacted from httr2 request printing.
 
 HTTP 429, 500, 502, 503, and 504 responses and low-level connection
-failures are retried up to `max_retries` times. HTTP 401 and 403
-responses are never retried. Set `verify_tls = FALSE` only for
-controlled development environments; doing so raises an
-`openlineage_insecure_tls_warning`.
+failures are retried up to `max_retries` times. The delay is the
+response's `Retry-After`, in seconds or as an HTTP date, capped at 60
+seconds; otherwise it doubles from 1 second up to 30. HTTP 401 and 403
+responses are never retried. Redirects are not followed: a 3xx response
+raises an `openlineage_http_error`, so that neither the event nor a
+credential header is sent to another location.
+
+Delivery is at least once. A retry after a timeout, or libcurl resending
+a request on a connection the server closed, can deliver an event twice,
+so consumers should deduplicate, as OpenLineage backends do by run ID,
+event type and event time.
+
+Set `verify_tls = FALSE` only for controlled development environments;
+doing so raises an `openlineage_insecure_tls_warning`.
 
 ## Value
 
@@ -81,7 +91,7 @@ Create an HTTP transport.
 
 - `timeout`:
 
-  A positive request timeout in seconds.
+  A request timeout in seconds, between 0.001 and 2147483.
 
 - `verify_tls`:
 

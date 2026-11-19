@@ -8,7 +8,9 @@ OPENLINEAGE_DISABLED. Explicit arguments take precedence over their
 environment equivalents. OPENLINEAGE_DISABLED accepts only true or
 false, ignoring case and surrounding whitespace.
 A disabled client uses NoopTransport. An injected transport takes
-precedence over HTTP environment variables. If neither a transport nor URL
+precedence over HTTP environment variables. Supplying transport
+together with url, api_key or any other HTTP argument is an error,
+also when the client is disabled. If neither a transport nor URL
 is configured, the client uses ConsoleTransport. Supplying partial HTTP
 settings without a URL is an error."><meta property="og:description" content="Coordinates event emission through an OpenLineage transport. Supply a
 transport directly for local or custom delivery, or configure the built-in
@@ -19,7 +21,9 @@ OPENLINEAGE_DISABLED. Explicit arguments take precedence over their
 environment equivalents. OPENLINEAGE_DISABLED accepts only true or
 false, ignoring case and surrounding whitespace.
 A disabled client uses NoopTransport. An injected transport takes
-precedence over HTTP environment variables. If neither a transport nor URL
+precedence over HTTP environment variables. Supplying transport
+together with url, api_key or any other HTTP argument is an error,
+also when the client is disabled. If neither a transport nor URL
 is configured, the client uses ConsoleTransport. Supplying partial HTTP
 settings without a URL is an error."><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -66,7 +70,9 @@ HTTP transport with <code>url</code> and related arguments.</p>
 environment equivalents. <code>OPENLINEAGE_DISABLED</code> accepts only <code>true</code> or
 <code>false</code>, ignoring case and surrounding whitespace.</p>
 <p>A disabled client uses <a href="local_transports.html">NoopTransport</a>. An injected <code>transport</code> takes
-precedence over HTTP environment variables. If neither a transport nor URL
+precedence over HTTP environment variables. Supplying <code>transport</code>
+together with <code>url</code>, <code>api_key</code> or any other HTTP argument is an error,
+also when the client is disabled. If neither a transport nor URL
 is configured, the client uses <a href="local_transports.html">ConsoleTransport</a>. Supplying partial HTTP
 settings without a URL is an error.</p>
     </div>
@@ -95,6 +101,7 @@ settings without a URL is an error.</p>
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 <p></p><ul><li><p><a href="#method-OpenLineageClient-initialize"><code>OpenLineageClient$new()</code></a></p></li>
 <li><p><a href="#method-OpenLineageClient-emit"><code>OpenLineageClient$emit()</code></a></p></li>
+<li><p><a href="#method-OpenLineageClient-close"><code>OpenLineageClient$close()</code></a></p></li>
 <li><p><a href="#method-OpenLineageClient-print"><code>OpenLineageClient$print()</code></a></p></li>
 <li><p><a href="#method-OpenLineageClient-clone"><code>OpenLineageClient$clone()</code></a></p></li>
 </ul></div><p></p><hr><a id="method-OpenLineageClient-initialize"></a><div class="section">
@@ -174,10 +181,25 @@ request attempt.</p></dd>
 
 </div>
 
+<p></p><hr><a id="method-OpenLineageClient-close"></a><div class="section">
+<h3 id="openlineageclient-close-"><code>OpenLineageClient$close()</code><a class="anchor" aria-label="anchor" href="#openlineageclient-close-"></a></h3>
+<p>Close the transport, finishing any pending work. The built-in
+transports have none. A custom transport without a <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code> method
+is left as it is.</p><div class="section">
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">OpenLineageClient</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<p>The value of the transport's <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code>, invisibly, or <code>TRUE</code>
+when it has none.</p>
+</div>
+
+</div>
+
 <p></p><hr><a id="method-OpenLineageClient-print"></a><div class="section">
 <h3 id="openlineageclient-print-"><code>OpenLineageClient$print()</code><a class="anchor" aria-label="anchor" href="#openlineageclient-print-"></a></h3>
 <p>Print a credential-free client summary.</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">OpenLineageClient</span><span class="op">$</span><span class="fu">print</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-2">Arguments<a class="anchor" aria-label="anchor" href="#arguments-2"></a></h4>
@@ -187,7 +209,7 @@ request attempt.</p></dd>
 
 </dl><p></p></div>
 </div><p></p><div class="section">
-<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
 <p>The client, invisibly.</p>
 </div>
 
@@ -196,7 +218,7 @@ request attempt.</p></dd>
 <p></p><hr><a id="method-OpenLineageClient-clone"></a><div class="section">
 <h3 id="openlineageclient-clone-"><code>OpenLineageClient$clone()</code><a class="anchor" aria-label="anchor" href="#openlineageclient-clone-"></a></h3>
 <p>The objects of this class are cloneable with this method.</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">OpenLineageClient</span><span class="op">$</span><span class="fu">clone</span><span class="op">(</span>deep <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div><p></p><div class="section">
 <h4 id="arguments-3">Arguments<a class="anchor" aria-label="anchor" href="#arguments-3"></a></h4>

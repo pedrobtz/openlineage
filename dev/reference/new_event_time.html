@@ -59,6 +59,12 @@ precision, suitable for the <code>eventTime</code> field of an OpenLineage event
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A single UTC timestamp string.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Sub-millisecond digits are truncated, not rounded, as in the OpenLineage
+Python client. The year must be between 0001 and 9999, the range that
+RFC 3339 can express.</p>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>

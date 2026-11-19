@@ -54,8 +54,8 @@ invisibly after success.</p>
     <p><code>AccumulatingTransport</code> stores emitted models in its public <code>events</code> list.
 Its <code>clear()</code> method removes all accumulated events and returns the transport
 invisibly.</p>
-<p><code>ConsoleTransport</code> writes one JSON event to <code>stream</code>. Set <code>pretty = TRUE</code>
-for indented output.</p>
+<p><code>ConsoleTransport</code> writes one indented JSON event to <code>stream</code>. Set
+<code>pretty = FALSE</code> for single-line output.</p>
 <p><code>NoopTransport</code> validates an event but performs no output or storage.</p>
 <p>All transports provide <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code>, which returns <code>TRUE</code> invisibly because the
 local transports have no pending work.</p>

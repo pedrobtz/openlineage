@@ -21,6 +21,12 @@ new_event_time(time = Sys.time())
 
 A single UTC timestamp string.
 
+## Details
+
+Sub-millisecond digits are truncated, not rounded, as in the OpenLineage
+Python client. The year must be between 0001 and 9999, the range that
+RFC 3339 can express.
+
 ## Examples
 
 ``` r
