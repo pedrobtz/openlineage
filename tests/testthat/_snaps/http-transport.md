@@ -1,45 +1,3 @@
-# invalid HTTP events fail before making a request
-
-    Code
-      transport$emit("serialized JSON")
-    Condition
-      Error:
-      ! `event` must be a `RunEvent` object.
-
-# authentication failures are classified and never retried
-
-    Code
-      HttpTransport$new("https://example.com")$emit(http_transport_event())
-    Condition
-      Error:
-      ! OpenLineage authentication failed with HTTP 401.
-
-# exhausted low-level failures keep their cause, not credentials (#26)
-
-    Code
-      transport$emit(http_transport_event())
-    Condition
-      Error:
-      ! OpenLineage HTTP request failed before receiving a response.
-      Caused by: Could not resolve host: example.com
-
-# HTTP retries are bounded
-
-    Code
-      attempts <- 0L
-      transport$emit(http_transport_event())
-    Condition
-      Error:
-      ! OpenLineage server returned HTTP 503.
-
-# disabling TLS verification warns and configures curl
-
-    Code
-      invisible(HttpTransport$new("https://example.com", verify_tls = FALSE))
-    Condition
-      Warning:
-      TLS certificate verification is disabled. Use this only in a controlled development environment.
-
 # HTTP configuration rejects unsafe or conflicting values
 
     Code
@@ -145,6 +103,48 @@
     Condition
       Error:
       ! `verify_tls` must be `TRUE` or `FALSE`.
+
+# disabling TLS verification warns and configures curl
+
+    Code
+      invisible(HttpTransport$new("https://example.com", verify_tls = FALSE))
+    Condition
+      Warning:
+      TLS certificate verification is disabled. Use this only in a controlled development environment.
+
+# invalid HTTP events fail before making a request
+
+    Code
+      transport$emit("serialized JSON")
+    Condition
+      Error:
+      ! `event` must be a `RunEvent` object.
+
+# HTTP retries are bounded
+
+    Code
+      attempts <- 0L
+      transport$emit(http_transport_event())
+    Condition
+      Error:
+      ! OpenLineage server returned HTTP 503.
+
+# authentication failures are classified and never retried
+
+    Code
+      HttpTransport$new("https://example.com")$emit(http_transport_event())
+    Condition
+      Error:
+      ! OpenLineage authentication failed with HTTP 401.
+
+# exhausted low-level failures keep their cause, not credentials (#26)
+
+    Code
+      transport$emit(http_transport_event())
+    Condition
+      Error:
+      ! OpenLineage HTTP request failed before receiving a response.
+      Caused by: Could not resolve host: example.com
 
 # redirects are not followed and raise a classed error (#21)
 

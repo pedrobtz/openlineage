@@ -22,14 +22,6 @@
       Error:
       ! `pretty` must be `TRUE` or `FALSE`.
 
-# unknown S7 objects and unmapped facets are rejected (#36)
-
-    Code
-      as_openlineage_list(UnmappedFacet())
-    Condition
-      Error in `as_openlineage_list()`:
-      ! No wire mapping is registered for facet `UnmappedFacet`.
-
 # values jsonlite would change silently are rejected (#30, #31)
 
     Code
@@ -53,4 +45,12 @@
     Condition
       Error in `as_openlineage_list()`:
       ! OpenLineage values must not contain lists with repeated names.
+
+# unknown S7 objects and unmapped facets are rejected (#36)
+
+    Code
+      as_openlineage_list(UnmappedFacet())
+    Condition
+      Error in `as_openlineage_list()`:
+      ! No wire mapping is registered for facet `UnmappedFacet`.
 

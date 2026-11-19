@@ -1,11 +1,3 @@
-# ol_facet() fields never partial-match its arguments (#29)
-
-    Code
-      ol_facet(schema = url)
-    Condition
-      Error:
-      ! `schema_url` must be supplied, by name or as the unnamed argument.
-
 # typed facets enforce their placement
 
     Code
@@ -38,14 +30,6 @@
     Condition
       Error:
       ! Every element of `output_facets` must be a compatible output facet created by a typed constructor or `ol_facet()`.
-
-# statistics counts must be between 0 and 2^53 (#22, #46)
-
-    Code
-      InputStatisticsInputDatasetFacet(-1)
-    Condition
-      Error:
-      ! `row_count` must be an integer-like number between 0 and 2^53, or `NULL`.
 
 # facet validation rejects malformed values
 
@@ -94,4 +78,20 @@
     Condition
       Error:
       ! `field` is supported only by `TagsDatasetFacet`.
+
+# ol_facet() fields never partial-match its arguments (#29)
+
+    Code
+      ol_facet(schema = url)
+    Condition
+      Error:
+      ! `schema_url` must be supplied, by name or as the unnamed argument.
+
+# statistics counts must be between 0 and 2^53 (#22, #46)
+
+    Code
+      InputStatisticsInputDatasetFacet(-1)
+    Condition
+      Error:
+      ! `row_count` must be an integer-like number between 0 and 2^53, or `NULL`.
 
