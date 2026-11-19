@@ -27,3 +27,28 @@ test_that("semantic JSON comparison preserves array order and empty types", {
   expect_identical(names(value$object), character())
   expect_null(names(value$array))
 })
+
+test_that("every typed facet matches the Python golden fixture (#35)", {
+  expect_json_semantically_equal(
+    to_openlineage_json(all_facets_event()),
+    read_json_fixture("all-facets.json")
+  )
+})
+
+test_that("generic numbers match the Python golden fixture (#22)", {
+  facet <- ol_facet(
+    "https://example.com/NumbersRunFacet.json",
+    sum = 0.1 + 0.2,
+    long = 123456789.123456789,
+    two53 = 2^53,
+    big = 3e9,
+    quadrillion = 1e15,
+    negative = -2.5,
+    tiny = 2^-20
+  )
+
+  expect_json_semantically_equal(
+    to_openlineage_json(facet),
+    read_json_fixture("generic-numbers.json")
+  )
+})

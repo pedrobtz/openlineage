@@ -1,0 +1,11 @@
+{
+  "_producer": "https://github.com/pedrobtz/openlineage",
+  "_schemaURL": "https://example.com/NumbersRunFacet.json",
+  "big": 3000000000.0,
+  "long": 123456789.12345679,
+  "negative": -2.5,
+  "quadrillion": 1000000000000000.0,
+  "sum": 0.30000000000000004,
+  "tiny": 9.5367431640625e-07,
+  "two53": 9007199254740992
+}
