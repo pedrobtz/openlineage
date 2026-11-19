@@ -39,3 +39,11 @@ jobs:
       # compile.
       containers: '[]'
       quick-containers: '[]'
+      # The r-actions default plus Windows R-devel, CRAN's flavor that no
+      # other leg checks (full profile only).
+      runners: >-
+        [{"os": "macos-latest", "r": "release"},
+         {"os": "windows-latest", "r": "release"},
+         {"os": "windows-latest", "r": "devel"},
+         {"os": "ubuntu-latest", "r": "release"},
+         {"os": "ubuntu-latest", "r": "oldrel-1"}]

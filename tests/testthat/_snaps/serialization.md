@@ -54,3 +54,19 @@
       Error in `as_openlineage_list()`:
       ! No wire mapping is registered for facet `UnmappedFacet`.
 
+# Dates at the year limits are written; outside them rejected (#64)
+
+    Code
+      generic_text(v = as.Date(Inf))
+    Condition
+      Error in `as_openlineage_list()`:
+      ! OpenLineage values must not contain infinite dates.
+
+---
+
+    Code
+      generic_text(v = R.version)
+    Condition
+      Error in `as_openlineage_list()`:
+      ! OpenLineage values must not contain objects of class `simple.list`.
+

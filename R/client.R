@@ -247,11 +247,28 @@ OpenLineageClient <- R6Class(
     #' @returns The value of the transport's `close()`, invisibly, or `TRUE`
     #'   when it has none.
     close = function() {
+      caller <- parent.frame()
+      .ol_validate_transport(self$transport, call = caller)
       close_transport <- self$transport$close
       if (!is.function(close_transport)) {
         return(invisible(TRUE))
       }
-      invisible(close_transport())
+      outcome <- tryCatch(
+        list(value = close_transport()),
+        error = \(condition) list(condition = condition)
+      )
+      condition <- outcome$condition
+      if (inherits(condition, "openlineage_error")) {
+        stop(condition)
+      }
+      if (!is.null(condition)) {
+        .ol_transport_failure(
+          "Transport failed to close.",
+          parent = condition,
+          call = caller
+        )
+      }
+      invisible(outcome$value)
     },
 
     #' @description
