@@ -12,7 +12,7 @@
       as_openlineage_list(list(value = NA))
     Condition
       Error in `as_openlineage_list()`:
-      ! OpenLineage values must not contain unsupported objects or missing values.
+      ! OpenLineage values must not contain missing values.
 
 ---
 
@@ -21,4 +21,36 @@
     Condition
       Error:
       ! `pretty` must be `TRUE` or `FALSE`.
+
+# unknown S7 objects and unmapped facets are rejected (#36)
+
+    Code
+      as_openlineage_list(UnmappedFacet())
+    Condition
+      Error in `as_openlineage_list()`:
+      ! No wire mapping is registered for facet `UnmappedFacet`.
+
+# values jsonlite would change silently are rejected (#30, #31)
+
+    Code
+      generic_text(v = Inf)
+    Condition
+      Error in `as_openlineage_list()`:
+      ! OpenLineage values must not contain infinite numbers.
+
+---
+
+    Code
+      generic_text(v = c(a = 1))
+    Condition
+      Error in `as_openlineage_list()`:
+      ! OpenLineage values must not contain named atomic vectors.
+
+---
+
+    Code
+      generic_text(v = list(a = 1, a = 2))
+    Condition
+      Error in `as_openlineage_list()`:
+      ! OpenLineage values must not contain lists with repeated names.
 

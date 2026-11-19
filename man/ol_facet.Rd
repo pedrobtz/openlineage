@@ -4,12 +4,13 @@
 \alias{ol_facet}
 \title{Create a generic OpenLineage facet}
 \usage{
-ol_facet(schema_url, ..., producer = OPENLINEAGE_PRODUCER, deleted = NULL)
+ol_facet(..., schema_url, producer = OPENLINEAGE_PRODUCER, deleted = NULL)
 }
 \arguments{
-\item{schema_url}{The URI of the facet's JSON Schema definition.}
+\item{...}{Named facet fields using their OpenLineage wire names, and the
+schema URL as the one unnamed argument when \code{schema_url} is not named.}
 
-\item{...}{Named facet fields using their OpenLineage wire names.}
+\item{schema_url}{The URI of the facet's JSON Schema definition.}
 
 \item{producer}{A URI identifying the facet producer.}
 
@@ -23,10 +24,34 @@ A generic OpenLineage facet accepted in any facet map.
 Creates a facet for extensions or facet schemas without a typed constructor.
 Names supplied through \code{...} are preserved exactly at the JSON boundary.
 }
+\details{
+The schema URL is either named \code{schema_url} or given as the one unnamed
+argument, usually the first. \code{schema_url}, \code{producer} and \code{deleted} come
+after \code{...}, so they are matched only by their full names: a field such as
+\code{schema} or \code{prod} is a field, never a partial match for an argument.
+
+Field values map to JSON as follows:
+\itemize{
+\item A length-1 vector is a JSON scalar. Wrap it in \code{\link[=I]{I()}} (\code{I("only")}) or a
+\code{\link[=list]{list()}} to write a one-element array. Longer vectors are arrays.
+\item A named list is an object and an unnamed list is an array. An empty
+unnamed \code{list()} is \verb{[]}; use \code{setNames(list(), character())} for \code{{}}.
+\item \code{NULL} fields are omitted, so a JSON \code{null} cannot be written.
+\item Integer-valued numbers up to 2^53 are written exactly; other numbers with
+the fewest digits that read back as the same double.
+\item A \code{POSIXct} value is written as an event time (\code{\link[=new_event_time]{new_event_time()}}), a
+\code{Date} as \code{YYYY-MM-DD} and a factor as its labels.
+\item Missing values, \code{NaN}, infinite numbers, complex and raw vectors, named
+atomic vectors, lists with repeated or empty names, text that is not
+valid UTF-8 and other classed objects raise an
+\code{openlineage_validation_error} when the facet is serialized.
+}
+}
 \examples{
 facet <- ol_facet(
   "https://example.com/CustomRunFacet.json",
-  customValue = "example"
+  customValue = "example",
+  tags = I("nightly")
 )
 Run(new_run_id(), facets = list(custom = facet))
 }
