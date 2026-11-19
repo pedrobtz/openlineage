@@ -78,7 +78,7 @@
       HttpTransport$new("https://example.com", timeout = 0)
     Condition
       Error:
-      ! `timeout` must be greater than zero.
+      ! `timeout` must be a number of seconds between 0.001 and 2147483.
 
 ---
 
@@ -137,11 +137,44 @@
       Error:
       ! OpenLineage authentication failed with HTTP 401.
 
-# exhausted low-level failures are sanitized
+# exhausted low-level failures keep their cause, not credentials (#26)
 
     Code
       transport$emit(http_transport_event())
     Condition
       Error:
       ! OpenLineage HTTP request failed before receiving a response.
+      Caused by: Could not resolve host: example.com
+
+# redirects are not followed and raise a classed error (#21)
+
+    Code
+      transport$emit(http_transport_event())
+    Condition
+      Error:
+      ! OpenLineage server returned HTTP 308; redirects are not followed.
+
+# timeout is bounded at construction (#27)
+
+    Code
+      HttpTransport$new("https://example.com", timeout = 1e-05)
+    Condition
+      Error:
+      ! `timeout` must be a number of seconds between 0.001 and 2147483.
+
+# URL and endpoint values that change the path are rejected (#28)
+
+    Code
+      HttpTransport$new("http://host", endpoint = "api/%2e%2e/admin")
+    Condition
+      Error:
+      ! `endpoint` must be a non-empty relative path without `.` or `..` segments.
+
+---
+
+    Code
+      HttpTransport$new("http://host", endpoint = "a b")
+    Condition
+      Error:
+      ! `endpoint` must not contain whitespace or control characters.
 

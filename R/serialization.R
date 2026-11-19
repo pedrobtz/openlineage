@@ -144,6 +144,9 @@
 
   if (is.list(x)) {
     object <- !is.null(names(x))
+    if (object) {
+      .ol_validate_wire_names(names(x), call = call)
+    }
     converted <- lapply(x, .ol_to_wire, call = call)
     keep <- !vapply(converted, is.null, logical(1))
     converted <- converted[keep]
@@ -157,15 +160,125 @@
     return(converted)
   }
 
-  if (!is.atomic(x) || anyNA(x)) {
-    .ol_abort(
-      "OpenLineage values must not contain unsupported objects or missing values.",
-      class = "openlineage_validation_error",
-      call = call
+  .ol_atomic_to_wire(x, call = call)
+}
+
+.ol_wire_abort <- function(problem, call) {
+  .ol_abort(
+    paste0("OpenLineage values must not contain ", problem, "."),
+    class = "openlineage_validation_error",
+    call = call
+  )
+}
+
+.ol_validate_wire_names <- function(x, call) {
+  if (anyNA(x) || !all(nzchar(x))) {
+    .ol_wire_abort("lists with missing or empty names", call)
+  }
+  if (anyDuplicated(x)) {
+    .ol_wire_abort("lists with repeated names", call)
+  }
+  if (!all(validUTF8(enc2utf8(x)))) {
+    .ol_wire_abort("names that are not valid UTF-8", call)
+  }
+
+  invisible(x)
+}
+
+# Converts an atomic vector to the value jsonlite writes, or rejects it when
+# jsonlite would change it silently: `Inf` becoming `null`, names dropped,
+# POSIXct written without `T` or an offset.
+.ol_atomic_to_wire <- function(x, call) {
+  if (!is.atomic(x) || is.complex(x) || is.raw(x)) {
+    .ol_wire_abort("unsupported objects", call)
+  }
+  if (anyNA(x)) {
+    .ol_wire_abort("missing values", call)
+  }
+  if (!is.null(names(x))) {
+    .ol_wire_abort("named atomic vectors", call)
+  }
+
+  as_is <- inherits(x, "AsIs")
+  if (inherits(x, "POSIXt")) {
+    x <- as.POSIXct(x)
+    x <- vapply(
+      seq_along(x),
+      \(i) .ol_event_time(x[i], "value", call = call),
+      character(1)
+    )
+  } else if (inherits(x, "Date")) {
+    x <- format(x, "%Y-%m-%d")
+  } else if (is.factor(x)) {
+    x <- as.character(x)
+  } else if (length(setdiff(oldClass(x), "AsIs")) > 0L) {
+    .ol_wire_abort(
+      paste0("objects of class `", class(x)[[1L]], "`"),
+      call
     )
   }
 
-  x
+  if (is.double(x) && !all(is.finite(x))) {
+    .ol_wire_abort("infinite numbers", call)
+  }
+  if (is.character(x)) {
+    x <- enc2utf8(x)
+    if (!all(validUTF8(x))) {
+      .ol_wire_abort("text that is not valid UTF-8", call)
+    }
+  }
+
+  if (as_is) I(x) else x
+}
+
+# Doubles are written as text before jsonlite sees them: integer-valued
+# doubles up to 2^53 exactly, others with the fewest significant digits (15
+# to 17) that read back as the same double, as Python's `repr()` does. The
+# read-back uses jsonlite's parser (C `strtod()`), as consumers do; R's own
+# `as.numeric()` is not correctly rounded for every input.
+.ol_format_double <- function(x) {
+  text <- character(length(x))
+  exact <- x == trunc(x) & abs(x) <= 2^53
+  text[exact] <- sprintf("%.0f", x[exact])
+
+  pending <- which(!exact)
+  for (digits in 15:17) {
+    if (length(pending) == 0L) {
+      break
+    }
+    candidate <- sprintf(paste0("%.", digits, "g"), x[pending])
+    # 17 significant digits always identify a double.
+    same <- if (digits == 17L) {
+      rep(TRUE, length(pending))
+    } else {
+      jsonlite::parse_json(
+        paste0("[", paste(candidate, collapse = ","), "]"),
+        simplifyVector = TRUE
+      ) ==
+        x[pending]
+    }
+    text[pending[same]] <- candidate[same]
+    pending <- pending[!same]
+  }
+
+  text
+}
+
+.ol_json_numbers <- function(x) {
+  if (is.list(x)) {
+    converted <- lapply(x, .ol_json_numbers)
+    names(converted) <- names(x)
+    return(converted)
+  }
+  if (!is.double(x)) {
+    return(x)
+  }
+
+  text <- .ol_format_double(unclass(x))
+  if (length(x) != 1L || inherits(x, "AsIs")) {
+    text <- paste0("[", paste(text, collapse = ","), "]")
+  }
+  structure(text, class = "json")
 }
 
 #' Convert an OpenLineage value to its wire representation
@@ -208,11 +321,11 @@ to_openlineage_json <- function(x, pretty = FALSE) {
   .ol_validate_flag(pretty, "pretty", call = parent.frame())
 
   as.character(jsonlite::toJSON(
-    as_openlineage_list(x),
+    .ol_json_numbers(as_openlineage_list(x)),
     auto_unbox = TRUE,
     null = "null",
     na = "null",
-    digits = NA,
+    json_verbatim = TRUE,
     pretty = pretty
   ))
 }

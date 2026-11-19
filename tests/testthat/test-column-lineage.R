@@ -91,11 +91,16 @@ test_that("column lineage nests under an output dataset", {
   expect_identical(value$fields$id$inputFields[[1]]$transformations, list())
 })
 
-test_that("column lineage keeps output column order and non-ASCII names", {
+test_that("column lineage keeps output column order and non-ASCII names (#37)", {
+  # setNames() keeps the names UTF-8; a `"z\u00e9ta" =` tag would become a
+  # symbol in the native encoding, which is not UTF-8 under LC_ALL=C.
   facet <- ColumnLineageDatasetFacet(
-    list(
-      "z\u00e9ta" = list(column_lineage_input("t", "a")),
-      alpha = list(column_lineage_input("t", "b"))
+    stats::setNames(
+      list(
+        list(column_lineage_input("t\u00e9", "a")),
+        list(column_lineage_input("t", "b"))
+      ),
+      c("z\u00e9ta", "alpha")
     )
   )
 
@@ -106,6 +111,10 @@ test_that("column lineage keeps output column order and non-ASCII names", {
 
   expect_identical(names(value$fields), c("z\u00e9ta", "alpha"))
   expect_identical(value$fields[["z\u00e9ta"]]$inputFields[[1]]$field, "a")
+  expect_identical(
+    value$fields[["z\u00e9ta"]]$inputFields[[1]]$name,
+    "t\u00e9"
+  )
 })
 
 test_that("column lineage constructors reject invalid inputs", {
@@ -164,10 +173,55 @@ test_that("column lineage constructors reject invalid inputs", {
 test_that("column lineage property setters validate", {
   facet <- ColumnLineageDatasetFacet(list(a = list()))
 
-  expect_error(facet@fields <- list(list()))
-  expect_error(facet@dataset <- list("x"))
+  expect_error(
+    facet@fields <- list(list()),
+    class = "openlineage_validation_error"
+  )
+  expect_error(
+    facet@dataset <- list("x"),
+    class = "openlineage_validation_error"
+  )
+  expect_error(facet@fields <- NULL, class = "openlineage_validation_error")
+  expect_error(
+    facet@fields <- list(a = list("x")),
+    class = "openlineage_validation_error"
+  )
   facet@fields <- list(b = list(column_lineage_input("t", "b")))
   expect_named(as_openlineage_list(facet)$fields, "b")
+})
+
+test_that("an empty fields list can be assigned and is written as {} (#25)", {
+  facet <- ColumnLineageDatasetFacet(list(a = list()))
+
+  facet@fields <- list()
+
+  expect_match(to_openlineage_json(facet), '"fields":{}', fixed = TRUE)
+})
+
+test_that("braces in column names are text, not code (#24)", {
+  input <- column_lineage_input("t", "a")
+  names <- c("{1+1}", "a{b", "}", "{.code x}")
+
+  for (name in names) {
+    condition <- tryCatch(
+      ColumnLineageDatasetFacet(stats::setNames(list(NULL), name)),
+      error = identity
+    )
+    expect_s3_class(condition, "openlineage_validation_error")
+    expect_match(
+      conditionMessage(condition),
+      paste0("`fields$", name, "`"),
+      fixed = TRUE
+    )
+
+    condition <- tryCatch(
+      ColumnLineageDatasetFacet(stats::setNames(list(list("x")), name)),
+      error = identity
+    )
+    expect_s3_class(condition, "openlineage_validation_error")
+    expect_match(conditionMessage(condition), name, fixed = TRUE)
+  }
+  expect_snapshot(error = TRUE, ColumnLineageDatasetFacet(list("{1+1}" = NULL)))
 })
 
 test_that("column lineage validation errors are stable", {

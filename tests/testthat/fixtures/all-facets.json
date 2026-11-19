@@ -1,0 +1,212 @@
+{
+  "eventTime": "2026-01-02T03:05:00.000Z",
+  "eventType": "COMPLETE",
+  "inputs": [
+    {
+      "facets": {
+        "dataSource": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-1/DatasourceDatasetFacet.json#/$defs/DatasourceDatasetFacet",
+          "name": "warehouse",
+          "uri": "postgres://warehouse"
+        },
+        "schema": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/SchemaDatasetFacet.json#/$defs/SchemaDatasetFacet",
+          "fields": [
+            {
+              "description": "Primary key",
+              "fields": [],
+              "name": "id",
+              "ordinal_position": 1,
+              "type": "INTEGER"
+            },
+            {
+              "fields": [
+                {
+                  "fields": [],
+                  "name": "city",
+                  "type": "STRING"
+                }
+              ],
+              "name": "address",
+              "ordinal_position": 2,
+              "type": "STRUCT"
+            }
+          ]
+        },
+        "tags": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/TagsDatasetFacet.json#/$defs/TagsDatasetFacet",
+          "tags": [
+            {
+              "field": "id",
+              "key": "pii",
+              "source": "USER",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "inputFacets": {
+        "inputStatistics": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/InputStatisticsInputDatasetFacet.json#/$defs/InputStatisticsInputDatasetFacet",
+          "fileCount": 1,
+          "rowCount": 0,
+          "size": 3000000000
+        }
+      },
+      "name": "public.source",
+      "namespace": "postgres://warehouse"
+    }
+  ],
+  "job": {
+    "facets": {
+      "jobType": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/2-0-4/JobTypeJobFacet.json#/$defs/JobTypeJobFacet",
+        "emissionPattern": {
+          "eventContentMode": "SNAPSHOT",
+          "eventTrigger": "PERIODIC",
+          "windowDuration": 300
+        },
+        "integration": "R",
+        "jobType": "QUERY",
+        "processingType": "BATCH"
+      },
+      "sourceCodeLocation": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/SourceCodeLocationJobFacet.json#/$defs/SourceCodeLocationJobFacet",
+        "branch": "main",
+        "path": "job.R",
+        "pullRequestNumber": "42",
+        "repoUrl": "https://github.com/example/project.git",
+        "tag": "v1.0.0",
+        "type": "git",
+        "url": "https://github.com/example/project/blob/main/job.R",
+        "version": "0123abcd"
+      },
+      "sql": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-0/SQLJobFacet.json#/$defs/SQLJobFacet",
+        "dialect": "ansi",
+        "query": "SELECT * FROM source"
+      },
+      "tags": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/TagsJobFacet.json#/$defs/TagsJobFacet",
+        "tags": [
+          {
+            "key": "environment",
+            "value": "production"
+          }
+        ]
+      }
+    },
+    "name": "all-facets",
+    "namespace": "example"
+  },
+  "outputs": [
+    {
+      "facets": {
+        "columnLineage": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json#/$defs/ColumnLineageDatasetFacet",
+          "dataset": [],
+          "fields": {
+            "id": {
+              "inputFields": [
+                {
+                  "field": "id",
+                  "name": "public.source",
+                  "namespace": "postgres://warehouse",
+                  "transformations": [
+                    {
+                      "masking": false,
+                      "subtype": "IDENTITY",
+                      "type": "DIRECT"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "name": "analytics.result",
+      "namespace": "postgres://warehouse",
+      "outputFacets": {
+        "outputStatistics": {
+          "_producer": "https://github.com/pedrobtz/openlineage",
+          "_schemaURL": "https://openlineage.io/spec/facets/1-0-2/OutputStatisticsOutputDatasetFacet.json#/$defs/OutputStatisticsOutputDatasetFacet",
+          "fileCount": 1000000000000000,
+          "rowCount": 1234567890123456,
+          "size": 9007199254740992
+        }
+      }
+    }
+  ],
+  "producer": "https://github.com/pedrobtz/openlineage",
+  "run": {
+    "facets": {
+      "errorMessage": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-1/ErrorMessageRunFacet.json#/$defs/ErrorMessageRunFacet",
+        "message": "Query failed",
+        "programmingLanguage": "R",
+        "stackTrace": "Error in f(): failed"
+      },
+      "nominalTime": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-1/NominalTimeRunFacet.json#/$defs/NominalTimeRunFacet",
+        "nominalEndTime": "2026-01-02T04:00:00.000Z",
+        "nominalStartTime": "2026-01-02T03:00:00.000Z"
+      },
+      "parent": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-2-0/ParentRunFacet.json#/$defs/ParentRunFacet",
+        "job": {
+          "facets": {},
+          "name": "parent-dag",
+          "namespace": "scheduler"
+        },
+        "root": {
+          "job": {
+            "facets": {},
+            "name": "root-dag",
+            "namespace": "scheduler"
+          },
+          "run": {
+            "facets": {},
+            "runId": "019c0000-0000-7000-8000-000000000003"
+          }
+        },
+        "run": {
+          "facets": {},
+          "runId": "019c0000-0000-7000-8000-000000000002"
+        }
+      },
+      "processingEngine": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-1-1/ProcessingEngineRunFacet.json#/$defs/ProcessingEngineRunFacet",
+        "name": "R",
+        "openlineageAdapterVersion": "0.2.0",
+        "version": "4.6.0"
+      },
+      "tags": {
+        "_producer": "https://github.com/pedrobtz/openlineage",
+        "_schemaURL": "https://openlineage.io/spec/facets/1-0-0/TagsRunFacet.json#/$defs/TagsRunFacet",
+        "tags": [
+          {
+            "key": "team",
+            "source": "USER",
+            "value": "data"
+          }
+        ]
+      }
+    },
+    "runId": "019c0000-0000-7000-8000-000000000001"
+  },
+  "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
+}

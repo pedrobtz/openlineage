@@ -40,7 +40,7 @@ the tests are the contract.
 ## Current state
 
 On CRAN as 0.1.0 (published 2026-07-30). `main` is the development version,
-`0.1.0.9000`, with no changes yet under its `NEWS.md` heading. It targets
+`0.1.0.9000`, heading for 0.2.0. It targets
 OpenLineage schema 2.0.2 (`OPENLINEAGE_SCHEMA_VERSION`).
 
 Implemented: S7 models for run states, runs, jobs, datasets and run events;
@@ -61,7 +61,7 @@ Gaps from the shared rules, as of 2026-11-18:
 ## Versions and dependents
 
 The current version's parent issue is
-[#5](https://github.com/pedrobtz/openlineage/issues/5), `v0.1.1`. The
+[#5](https://github.com/pedrobtz/openlineage/issues/5), `v0.2.0`. The
 `cran-release` reminder is
 [#4](https://github.com/pedrobtz/openlineage/issues/4). Sibling packages that
 depend on this one: none.
@@ -140,10 +140,37 @@ Deviation: `README.md` is the source; there is no `README.Rmd`.
   backs off as `2^(n - 1)` seconds capped at 30. 401 and 403 are never
   retried. `.ol_http_retry_sleep()` is the one place that sleeps, so tests
   can replace it.
+- **Retry-After is parsed by the package, not httr2.** Seconds, or an
+  IMF-fixdate measured from the response's `Date` (else
+  `.ol_http_now()`); anything else falls back to back-off. Redirects are
+  never followed (`followlocation = 0`); a 3xx is an `openlineage_http_error`.
+  A connection failure's `parent` is a stripped copy of the innermost curl
+  condition (class and message only), never the httr2 condition, which holds
+  the request and its headers.
+- **Delivery is at least once** (documented in `?HttpTransport`); connection
+  reuse is left on.
 - **`verify_tls = FALSE` warns** with `openlineage_insecure_tls_warning`.
 - **`transport =` excludes HTTP arguments.** Passing it with `url`,
-  `api_key` or any non-default HTTP argument is a config error, and so are
-  HTTP settings without a URL.
+  `api_key` or any non-default HTTP argument is a config error, also when
+  the client is disabled (checked before `disabled`, decided 2026-11-19,
+  #34), and so are HTTP settings without a URL.
+- **Numbers on the wire.** `to_openlineage_json()` writes doubles itself
+  (`.ol_format_double()`, through `json_verbatim`): integer-valued up to 2^53
+  as plain digits, others with the fewest of 15 to 17 significant digits
+  that jsonlite's parser reads back as the same double. Integer fields are
+  capped at 2^53. `as_openlineage_list()` returns plain R numbers.
+- **`.ol_to_wire()` rejects what jsonlite would change silently** (#30):
+  non-finite numbers, complex, raw, named atomic vectors, repeated or empty
+  list names, invalid UTF-8, classed atomics other than `AsIs`, factor,
+  `Date` and `POSIXt`. `POSIXt` becomes an event time.
+- **Setters equal constructors.** Every S7 property validator runs the
+  constructor's check through `.ol_abort()`; map properties have a setter
+  that names an empty `list()`, so it serializes as `{}`.
+- **`.ol_abort()` treats its message as data** (`"{text}"`), so a message
+  may embed user text with braces.
+- **`ol_facet()` takes `schema_url` after `...`** (decided 2026-11-19, #29),
+  so no field partial-matches an argument; the one unnamed argument is the
+  schema URL.
 - **`new_event_time()` emits UTC with exactly three fractional digits**
   (`2026-01-02T03:04:05.000Z`), truncating rather than rounding.
 

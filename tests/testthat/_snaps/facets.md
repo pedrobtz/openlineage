@@ -61,7 +61,7 @@
       InputStatisticsInputDatasetFacet(1.5)
     Condition
       Error:
-      ! `row_count` must be an integer-like number or `NULL`.
+      ! `row_count` must be an integer-like number between 0 and 2^53, or `NULL`.
 
 ---
 
@@ -69,7 +69,7 @@
       EmissionPattern("PERIODIC", "SNAPSHOT", 0L)
     Condition
       Error:
-      ! `window_duration` must be an integer-like number greater than or equal to 1.
+      ! `window_duration` must be an integer-like number between 1 and 2^53, or `NULL`.
 
 ---
 
@@ -78,4 +78,20 @@
     Condition
       Error:
       ! `field` is supported only by `TagsDatasetFacet`.
+
+# ol_facet() fields never partial-match its arguments (#29)
+
+    Code
+      ol_facet(schema = url)
+    Condition
+      Error:
+      ! `schema_url` must be supplied, by name or as the unnamed argument.
+
+# statistics counts must be between 0 and 2^53 (#22, #46)
+
+    Code
+      InputStatisticsInputDatasetFacet(-1)
+    Condition
+      Error:
+      ! `row_count` must be an integer-like number between 0 and 2^53, or `NULL`.
 

@@ -1,9 +1,17 @@
 .OPENLINEAGE_TRANSIENT_HTTP_STATUS <- c(429L, 500L, 502L, 503L, 504L)
 
-.ol_http_condition_abort <- function(message, class, status_code = NULL) {
+.ol_http_condition_abort <- function(
+  message,
+  class,
+  status_code = NULL,
+  parent = NULL
+) {
   fields <- list(message = message, call = NULL)
   if (!is.null(status_code)) {
     fields$status_code <- status_code
+  }
+  if (!is.null(parent)) {
+    fields$parent <- parent
   }
   condition <- structure(
     fields,
@@ -36,6 +44,18 @@
   }
   url <- trimws(url)
   endpoint <- trimws(endpoint)
+  if (grepl("[[:space:][:cntrl:]]", url)) {
+    .ol_http_config_abort(
+      "`url` must not contain whitespace or control characters.",
+      call = call
+    )
+  }
+  if (grepl("[[:space:][:cntrl:]]", endpoint)) {
+    .ol_http_config_abort(
+      "`endpoint` must not contain whitespace or control characters.",
+      call = call
+    )
+  }
 
   parsed <- tryCatch(
     httr2::url_parse(url),
@@ -48,7 +68,9 @@
     is.null(parsed$username) &&
     is.null(parsed$password) &&
     is.null(parsed$query) &&
-    is.null(parsed$fragment)
+    is.null(parsed$fragment) &&
+    !grepl("[?#]", url) &&
+    !.ol_has_dot_segment(sub("^[^:]+://[^/]*", "", url))
   if (!valid_url) {
     .ol_http_config_abort(
       paste0(
@@ -64,7 +86,7 @@
   valid_endpoint <- nzchar(endpoint) &&
     !grepl("^[A-Za-z][A-Za-z0-9+.-]*:", endpoint) &&
     !grepl("[?#]", endpoint) &&
-    !any(segments %in% c(".", ".."))
+    !.ol_has_dot_segment(endpoint)
   if (!valid_endpoint) {
     .ol_http_config_abort(
       "`endpoint` must be a non-empty relative path without `.` or `..` segments.",
@@ -79,6 +101,18 @@
   }
 
   paste0(url, "/", endpoint)
+}
+
+# A `.` or `..` path segment, also when percent-encoded (`%2e%2E`), which
+# servers decode and resolve, changing the path the request reaches. The raw
+# text is checked, since `httr2::url_parse()` resolves dot segments itself.
+.ol_has_dot_segment <- function(path) {
+  if (is.null(path)) {
+    return(FALSE)
+  }
+  segments <- strsplit(path, "/", fixed = TRUE)[[1L]]
+  decoded <- gsub("%2e", ".", segments, ignore.case = TRUE)
+  any(decoded %in% c(".", ".."))
 }
 
 .ol_normalize_api_key <- function(api_key, call = parent.frame()) {
@@ -181,6 +215,22 @@
 }
 
 .ol_http_abort <- function(status_code, call = parent.frame()) {
+  if (status_code >= 300L && status_code < 400L) {
+    .ol_http_condition_abort(
+      paste0(
+        "OpenLineage server returned HTTP ",
+        status_code,
+        "; redirects are not followed."
+      ),
+      class = c(
+        "openlineage_http_error",
+        "openlineage_transport_error",
+        "openlineage_error"
+      ),
+      status_code = status_code
+    )
+  }
+
   if (status_code %in% c(401L, 403L)) {
     .ol_http_condition_abort(
       paste0(
@@ -209,10 +259,34 @@
   )
 }
 
-.ol_http_transport_abort <- function(call = parent.frame()) {
+# The httr2 condition holds the request, whose headers carry credentials, and
+# a backtrace whose calls can too. Only the innermost cause's class and
+# message (from curl, naming the host and the failure) are kept.
+.ol_http_failure_cause <- function(condition) {
+  cause <- condition
+  while (inherits(cause$parent, "condition")) {
+    cause <- cause$parent
+  }
+  structure(
+    list(message = conditionMessage(cause), call = NULL),
+    class = unique(c(
+      setdiff(class(cause), c("rlang_error", "error", "condition")),
+      "error",
+      "condition"
+    ))
+  )
+}
+
+.ol_http_transport_abort <- function(condition, call = parent.frame()) {
+  cause <- .ol_http_failure_cause(condition)
   .ol_http_condition_abort(
-    "OpenLineage HTTP request failed before receiving a response.",
-    class = c("openlineage_transport_error", "openlineage_error")
+    paste0(
+      "OpenLineage HTTP request failed before receiving a response.\n",
+      "Caused by: ",
+      conditionMessage(cause)
+    ),
+    class = c("openlineage_transport_error", "openlineage_error"),
+    parent = cause
   )
 }
 
@@ -235,7 +309,8 @@
   if (!is.null(outcome$condition)) {
     .ol_http_condition_abort(
       conditionMessage(outcome$condition),
-      class = c("openlineage_validation_error", "openlineage_error")
+      class = c("openlineage_validation_error", "openlineage_error"),
+      parent = outcome$condition
     )
   }
 
@@ -260,10 +335,75 @@
   warning(condition)
 }
 
+.ol_http_now <- function() {
+  Sys.time()
+}
+
+# An IMF-fixdate (RFC 9110, section 5.6.7), such as
+# `Wed, 18 Nov 2026 14:48:30 GMT`. Month names are matched against the
+# English `month.abb`, since `strptime()`'s `%b` depends on the locale.
+.ol_http_parse_date <- function(value) {
+  if (is.null(value)) {
+    return(NULL)
+  }
+  parts <- regmatches(
+    value,
+    regexec(
+      paste0(
+        "^[A-Za-z]{3}, ([0-9]{2}) ([A-Za-z]{3}) ([0-9]{4}) ",
+        "([0-9]{2}):([0-9]{2}):([0-9]{2}) GMT$"
+      ),
+      trimws(value)
+    )
+  )[[1L]]
+  if (length(parts) == 0L) {
+    return(NULL)
+  }
+  month <- match(parts[[3L]], month.abb)
+  if (is.na(month)) {
+    return(NULL)
+  }
+  numbers <- as.integer(parts[c(4L, 2L, 5L, 6L, 7L)])
+  time <- ISOdatetime(
+    numbers[[1L]],
+    month,
+    numbers[[2L]],
+    numbers[[3L]],
+    numbers[[4L]],
+    numbers[[5L]],
+    tz = "UTC"
+  )
+  if (is.na(time)) NULL else time
+}
+
+# Seconds to wait from a `Retry-After` header, or `NULL` when it is absent or
+# unreadable. A date is measured from the response's `Date` header, or from
+# now when that is missing.
+.ol_http_retry_after <- function(response) {
+  value <- httr2::resp_header(response, "Retry-After")
+  if (is.null(value)) {
+    return(NULL)
+  }
+  value <- trimws(value)
+  if (grepl("^-?[0-9]+(\\.[0-9]+)?$", value)) {
+    return(as.numeric(value))
+  }
+
+  date <- .ol_http_parse_date(value)
+  if (is.null(date)) {
+    return(NULL)
+  }
+  reference <- .ol_http_parse_date(httr2::resp_header(response, "Date"))
+  if (is.null(reference)) {
+    reference <- .ol_http_now()
+  }
+  as.numeric(difftime(date, reference, units = "secs"))
+}
+
 .ol_http_retry_delay <- function(response, retry_number) {
   if (!is.null(response)) {
-    after <- suppressWarnings(httr2::resp_retry_after(response))
-    if (length(after) == 1L && !is.na(after) && is.finite(after)) {
+    after <- .ol_http_retry_after(response)
+    if (!is.null(after)) {
       return(max(0, min(after, 60)))
     }
   }
@@ -287,9 +427,20 @@
 #' httr2 request printing.
 #'
 #' HTTP 429, 500, 502, 503, and 504 responses and low-level connection
-#' failures are retried up to `max_retries` times. HTTP 401 and 403 responses
-#' are never retried. Set `verify_tls = FALSE` only for controlled development
-#' environments; doing so raises an `openlineage_insecure_tls_warning`.
+#' failures are retried up to `max_retries` times. The delay is the response's
+#' `Retry-After`, in seconds or as an HTTP date, capped at 60 seconds;
+#' otherwise it doubles from 1 second up to 30. HTTP 401 and 403 responses
+#' are never retried. Redirects are not followed: a 3xx response raises an
+#' `openlineage_http_error`, so that neither the event nor a credential
+#' header is sent to another location.
+#'
+#' Delivery is at least once. A retry after a timeout, or libcurl resending
+#' a request on a connection the server closed, can deliver an event twice,
+#' so consumers should deduplicate, as OpenLineage backends do by run ID,
+#' event type and event time.
+#'
+#' Set `verify_tls = FALSE` only for controlled development environments;
+#' doing so raises an `openlineage_insecure_tls_warning`.
 #'
 #' @return An R6 HTTP transport object.
 #' @seealso [local_transports]
@@ -308,7 +459,8 @@ HttpTransport <- R6Class(
     #' @param endpoint A relative OpenLineage endpoint path.
     #' @param api_key An optional bearer API key.
     #' @param headers Optional custom headers as a named character vector.
-    #' @param timeout A positive request timeout in seconds.
+    #' @param timeout A request timeout in seconds, between 0.001 and
+    #'   2147483.
     #' @param verify_tls Whether to verify TLS certificates.
     #' @param max_retries A non-negative number of retries after the first
     #'   request attempt.
@@ -325,10 +477,16 @@ HttpTransport <- R6Class(
       caller <- parent.frame()
       api_key <- .ol_normalize_api_key(api_key, call = caller)
       headers <- .ol_normalize_http_headers(headers, call = caller)
-      .ol_validate_http_number(timeout, "timeout", 0, call = caller)
-      if (timeout == 0) {
+      # httr2 needs at least 1 ms, and curl holds milliseconds in a 32-bit
+      # integer.
+      valid_timeout <- is.numeric(timeout) &&
+        length(timeout) == 1L &&
+        !is.na(timeout) &&
+        timeout >= 0.001 &&
+        timeout <= 2147483
+      if (!valid_timeout) {
         .ol_http_config_abort(
-          "`timeout` must be greater than zero.",
+          "`timeout` must be a number of seconds between 0.001 and 2147483.",
           call = caller
         )
       }
@@ -415,7 +573,7 @@ HttpTransport <- R6Class(
         if (!is.null(status_code)) {
           .ol_http_abort(status_code, call = caller)
         }
-        .ol_http_transport_abort(call = caller)
+        .ol_http_transport_abort(outcome$condition, call = caller)
       }
     },
 
@@ -454,6 +612,7 @@ HttpTransport <- R6Class(
       request <- httr2::request(private$url) |>
         httr2::req_method("POST") |>
         httr2::req_timeout(private$timeout) |>
+        httr2::req_options(followlocation = 0L) |>
         httr2::req_body_raw(body, type = "application/json") |>
         httr2::req_error(is_error = \(response) FALSE)
 

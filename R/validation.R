@@ -12,6 +12,14 @@
     )
   }
 
+  if (!validUTF8(enc2utf8(x))) {
+    .ol_abort(
+      paste0("`", arg, "` must be valid UTF-8 text."),
+      class = "openlineage_validation_error",
+      call = call
+    )
+  }
+
   if (!allow_empty && !nzchar(x)) {
     .ol_abort(
       paste0("`", arg, "` must not be empty."),
@@ -67,6 +75,11 @@
     "([Zz]|[+-][0-9]{2}:[0-9]{2})$"
   )
   valid_shape <- grepl(pattern, x, perl = TRUE)
+  if (valid_shape) {
+    # strptime() accepts hour 24 and year 0000, which RFC 3339 does not.
+    valid_shape <- substr(x, 1L, 4L) != "0000" &&
+      as.integer(substr(x, 12L, 13L)) <= 23L
+  }
 
   normalized <- sub("t", "T", x, fixed = TRUE)
   normalized <- sub("[Zz]$", "+0000", normalized)

@@ -27,3 +27,12 @@ copied unchanged from `spec/tests/ColumnLineageDatasetFacet/1.json` and
 Each wraps the facet under the key `columnLineage`. The first carries the
 deprecated `transformationDescription` and `transformationType` properties
 and a 1-1-0 schema URL, which the tests remove or rewrite before comparing.
+
+`all-facets.json` and `generic-numbers.json` were generated with client
+version 1.52.0 by `generate-fixtures.py` in this directory, which records how
+to run it. `all-facets.json` is one `COMPLETE` event carrying every typed
+facet the package implements, including `ParentRunFacet` with `root`,
+`JobTypeJobFacet` with an emission pattern, the three tags facets and
+statistics counts above 2^31 and up to 2^53. `generic-numbers.json` is a
+custom run facet whose float and integer values sit at the edges of double
+precision (`0.1 + 0.2`, `2^53`, `3e9`, `1e15`), written by Python's `repr()`.

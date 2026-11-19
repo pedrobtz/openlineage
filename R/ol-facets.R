@@ -51,20 +51,26 @@
     return(invisible(x))
   }
 
+  # 2^53 is the largest integer that a double, and a JSON number read by
+  # most parsers, holds exactly.
   valid <- is.numeric(x) &&
     length(x) == 1L &&
     !is.na(x) &&
     is.finite(x) &&
-    x == floor(x)
+    x == floor(x) &&
+    abs(x) <= 2^53
   if (valid && !is.null(minimum)) {
     valid <- x >= minimum
   }
 
   if (!valid) {
     detail <- if (is.null(minimum)) {
-      "an integer-like number or `NULL`"
+      "an integer-like number up to 2^53 in magnitude"
     } else {
-      paste0("an integer-like number greater than or equal to ", minimum)
+      paste0("an integer-like number between ", minimum, " and 2^53")
+    }
+    if (allow_null) {
+      detail <- paste0(detail, ", or `NULL`")
     }
     .ol_abort(
       paste0("`", arg, "` must be ", detail, "."),
@@ -133,13 +139,15 @@
   }
 )
 
-.ol_tags_property <- S7::new_property(
-  S7::class_any,
-  validator = function(value) {
-    .ol_record_array(value, .OpenLineageTag, "tags", call = NULL)
-    NULL
-  }
-)
+.ol_tags_property <- function(allow_field) {
+  S7::new_property(
+    S7::class_any,
+    validator = function(value) {
+      .ol_validate_tags(value, allow_field, call = NULL)
+      NULL
+    }
+  )
+}
 
 .ol_root_property <- S7::new_property(
   S7::class_any,
@@ -305,8 +313,30 @@
 #' Creates a facet for extensions or facet schemas without a typed constructor.
 #' Names supplied through `...` are preserved exactly at the JSON boundary.
 #'
+#' The schema URL is either named `schema_url` or given as the one unnamed
+#' argument, usually the first. `schema_url`, `producer` and `deleted` come
+#' after `...`, so they are matched only by their full names: a field such as
+#' `schema` or `prod` is a field, never a partial match for an argument.
+#'
+#' Field values map to JSON as follows:
+#'
+#' * A length-1 vector is a JSON scalar. Wrap it in [I()] (`I("only")`) or a
+#'   [list()] to write a one-element array. Longer vectors are arrays.
+#' * A named list is an object and an unnamed list is an array. An empty
+#'   unnamed `list()` is `[]`; use `setNames(list(), character())` for `{}`.
+#' * `NULL` fields are omitted, so a JSON `null` cannot be written.
+#' * Integer-valued numbers up to 2^53 are written exactly; other numbers with
+#'   the fewest digits that read back as the same double.
+#' * A `POSIXct` value is written as an event time ([new_event_time()]), a
+#'   `Date` as `YYYY-MM-DD` and a factor as its labels.
+#' * Missing values, `NaN`, infinite numbers, complex and raw vectors, named
+#'   atomic vectors, lists with repeated or empty names, text that is not
+#'   valid UTF-8 and other classed objects raise an
+#'   `openlineage_validation_error` when the facet is serialized.
+#'
+#' @param ... Named facet fields using their OpenLineage wire names, and the
+#'   schema URL as the one unnamed argument when `schema_url` is not named.
 #' @param schema_url The URI of the facet's JSON Schema definition.
-#' @param ... Named facet fields using their OpenLineage wire names.
 #' @param producer A URI identifying the facet producer.
 #' @param deleted Whether this facet deletes a previously emitted job or
 #'   dataset facet. Use only where the target schema supports `_deleted`.
@@ -317,16 +347,34 @@
 #' @examples
 #' facet <- ol_facet(
 #'   "https://example.com/CustomRunFacet.json",
-#'   customValue = "example"
+#'   customValue = "example",
+#'   tags = I("nightly")
 #' )
 #' Run(new_run_id(), facets = list(custom = facet))
 ol_facet <- function(
-  schema_url,
   ...,
+  schema_url,
   producer = OPENLINEAGE_PRODUCER,
   deleted = NULL
 ) {
-  fields <- .ol_normalize_map(list(...), "...", call = parent.frame())
+  fields <- list(...)
+  if (missing(schema_url)) {
+    dot_names <- names(fields)
+    if (is.null(dot_names)) {
+      dot_names <- rep("", length(fields))
+    }
+    unnamed <- which(is.na(dot_names) | !nzchar(dot_names))
+    if (length(unnamed) == 0L) {
+      .ol_abort(
+        "`schema_url` must be supplied, by name or as the unnamed argument.",
+        class = "openlineage_validation_error",
+        call = parent.frame()
+      )
+    }
+    schema_url <- fields[[unnamed[[1L]]]]
+    fields <- fields[-unnamed[[1L]]]
+  }
+  fields <- .ol_normalize_map(fields, "...", call = parent.frame())
   reserved <- intersect(names(fields), c("_producer", "_schemaURL", "_deleted"))
   if (length(reserved) > 0L) {
     .ol_abort(
@@ -835,11 +883,15 @@ ColumnLineageDatasetFacet <- S7::new_class(
   properties = list(
     fields = S7::new_property(
       S7::class_any,
-      validator = function(value) {
-        normalized <- .ol_column_lineage_fields(value, call = NULL)
-        if (!identical(value, normalized)) {
-          return("must be a named list")
+      setter = function(self, value) {
+        if (is.list(value) && length(value) == 0L) {
+          names(value) <- character()
         }
+        S7::prop(self, "fields") <- value
+        self
+      },
+      validator = function(value) {
+        .ol_column_lineage_fields(value, call = NULL)
         NULL
       }
     ),
@@ -1048,9 +1100,9 @@ InputStatisticsInputDatasetFacet <- S7::new_class(
   package = "openlineage",
   parent = .InputDatasetFacet,
   properties = list(
-    row_count = .ol_optional_integer_property("row_count"),
-    size = .ol_optional_integer_property("size"),
-    file_count = .ol_optional_integer_property("file_count")
+    row_count = .ol_optional_integer_property("row_count", minimum = 0),
+    size = .ol_optional_integer_property("size", minimum = 0),
+    file_count = .ol_optional_integer_property("file_count", minimum = 0)
   ),
   constructor = function(
     row_count = NULL,
@@ -1074,9 +1126,9 @@ OutputStatisticsOutputDatasetFacet <- S7::new_class(
   package = "openlineage",
   parent = .OutputDatasetFacet,
   properties = list(
-    row_count = .ol_optional_integer_property("row_count"),
-    size = .ol_optional_integer_property("size"),
-    file_count = .ol_optional_integer_property("file_count")
+    row_count = .ol_optional_integer_property("row_count", minimum = 0),
+    size = .ol_optional_integer_property("size", minimum = 0),
+    file_count = .ol_optional_integer_property("file_count", minimum = 0)
   ),
   constructor = function(
     row_count = NULL,
@@ -1168,7 +1220,7 @@ TagsJobFacet <- S7::new_class(
   "TagsJobFacet",
   package = "openlineage",
   parent = .JobFacet,
-  properties = list(tags = .ol_tags_property),
+  properties = list(tags = .ol_tags_property(allow_field = FALSE)),
   constructor = function(
     tags = list(),
     producer = OPENLINEAGE_PRODUCER,
@@ -1176,7 +1228,7 @@ TagsJobFacet <- S7::new_class(
   ) {
     S7::new_object(
       .JobFacet(producer, .SCHEMA_TAGS_JOB, deleted),
-      tags = .ol_validate_tags(tags, FALSE, call = parent.frame())
+      tags = .ol_validate_tags(tags, allow_field = FALSE, call = parent.frame())
     )
   }
 )
@@ -1187,11 +1239,11 @@ TagsRunFacet <- S7::new_class(
   "TagsRunFacet",
   package = "openlineage",
   parent = .RunFacet,
-  properties = list(tags = .ol_tags_property),
+  properties = list(tags = .ol_tags_property(allow_field = FALSE)),
   constructor = function(tags = list(), producer = OPENLINEAGE_PRODUCER) {
     S7::new_object(
       .RunFacet(producer, .SCHEMA_TAGS_RUN),
-      tags = .ol_validate_tags(tags, FALSE, call = parent.frame())
+      tags = .ol_validate_tags(tags, allow_field = FALSE, call = parent.frame())
     )
   }
 )
@@ -1202,7 +1254,7 @@ TagsDatasetFacet <- S7::new_class(
   "TagsDatasetFacet",
   package = "openlineage",
   parent = .DatasetFacet,
-  properties = list(tags = .ol_tags_property),
+  properties = list(tags = .ol_tags_property(allow_field = TRUE)),
   constructor = function(
     tags = list(),
     producer = OPENLINEAGE_PRODUCER,
@@ -1210,7 +1262,7 @@ TagsDatasetFacet <- S7::new_class(
   ) {
     S7::new_object(
       .DatasetFacet(producer, .SCHEMA_TAGS_DATASET, deleted),
-      tags = .ol_validate_tags(tags, TRUE, call = parent.frame())
+      tags = .ol_validate_tags(tags, allow_field = TRUE, call = parent.frame())
     )
   }
 )

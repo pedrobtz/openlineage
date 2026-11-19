@@ -108,8 +108,8 @@
 #' Its `clear()` method removes all accumulated events and returns the transport
 #' invisibly.
 #'
-#' `ConsoleTransport` writes one JSON event to `stream`. Set `pretty = TRUE`
-#' for indented output.
+#' `ConsoleTransport` writes one indented JSON event to `stream`. Set
+#' `pretty = FALSE` for single-line output.
 #'
 #' `NoopTransport` validates an event but performs no output or storage.
 #'

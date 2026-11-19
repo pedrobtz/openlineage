@@ -93,7 +93,9 @@
 #' `false`, ignoring case and surrounding whitespace.
 #'
 #' A disabled client uses [NoopTransport]. An injected `transport` takes
-#' precedence over HTTP environment variables. If neither a transport nor URL
+#' precedence over HTTP environment variables. Supplying `transport`
+#' together with `url`, `api_key` or any other HTTP argument is an error,
+#' also when the client is disabled. If neither a transport nor URL
 #' is configured, the client uses [ConsoleTransport]. Supplying partial HTTP
 #' settings without a URL is an error.
 #'
@@ -160,21 +162,24 @@ OpenLineageClient <- R6Class(
         max_retries_missing = max_retries_missing
       )
 
+      # A conflict between explicit arguments is an error even when the
+      # client is disabled, so that enabling it later cannot reveal it.
+      if (!is.null(transport) && length(explicit_http_args) > 0L) {
+        .ol_client_config_abort(
+          paste0(
+            "`transport` cannot be combined with HTTP argument(s): ",
+            .ol_client_http_args_text(explicit_http_args),
+            "."
+          )
+        )
+      }
+
       if (.ol_client_disabled(disabled)) {
         self$transport <- NoopTransport$new()
         return(invisible(self))
       }
 
       if (!is.null(transport)) {
-        if (length(explicit_http_args) > 0L) {
-          .ol_client_config_abort(
-            paste0(
-              "`transport` cannot be combined with HTTP argument(s): ",
-              .ol_client_http_args_text(explicit_http_args),
-              "."
-            )
-          )
-        }
         .ol_validate_transport(transport, call = parent.frame())
         self$transport <- transport
         return(invisible(self))
@@ -233,6 +238,20 @@ OpenLineageClient <- R6Class(
         event,
         call = parent.frame()
       )
+    },
+
+    #' @description
+    #' Close the transport, finishing any pending work. The built-in
+    #' transports have none. A custom transport without a `close()` method
+    #' is left as it is.
+    #' @returns The value of the transport's `close()`, invisibly, or `TRUE`
+    #'   when it has none.
+    close = function() {
+      close_transport <- self$transport$close
+      if (!is.function(close_transport)) {
+        return(invisible(TRUE))
+      }
+      invisible(close_transport())
     },
 
     #' @description

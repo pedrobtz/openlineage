@@ -17,9 +17,20 @@ authentication headers in \code{headers}. Supplying both an API key and a custom
 httr2 request printing.
 
 HTTP 429, 500, 502, 503, and 504 responses and low-level connection
-failures are retried up to \code{max_retries} times. HTTP 401 and 403 responses
-are never retried. Set \code{verify_tls = FALSE} only for controlled development
-environments; doing so raises an \code{openlineage_insecure_tls_warning}.
+failures are retried up to \code{max_retries} times. The delay is the response's
+\code{Retry-After}, in seconds or as an HTTP date, capped at 60 seconds;
+otherwise it doubles from 1 second up to 30. HTTP 401 and 403 responses
+are never retried. Redirects are not followed: a 3xx response raises an
+\code{openlineage_http_error}, so that neither the event nor a credential
+header is sent to another location.
+
+Delivery is at least once. A retry after a timeout, or libcurl resending
+a request on a connection the server closed, can deliver an event twice,
+so consumers should deduplicate, as OpenLineage backends do by run ID,
+event type and event time.
+
+Set \code{verify_tls = FALSE} only for controlled development environments;
+doing so raises an \code{openlineage_insecure_tls_warning}.
 }
 \examples{
 transport <- HttpTransport$new("https://example.com")
@@ -70,7 +81,8 @@ transport
       \item{\code{endpoint}}{A relative OpenLineage endpoint path.}
       \item{\code{api_key}}{An optional bearer API key.}
       \item{\code{headers}}{Optional custom headers as a named character vector.}
-      \item{\code{timeout}}{A positive request timeout in seconds.}
+      \item{\code{timeout}}{A request timeout in seconds, between 0.001 and
+2147483.}
       \item{\code{verify_tls}}{Whether to verify TLS certificates.}
       \item{\code{max_retries}}{A non-negative number of retries after the first
 request attempt.}

@@ -17,6 +17,11 @@ A single UTC timestamp string.
 Converts an R date-time to an ISO 8601 UTC timestamp with millisecond
 precision, suitable for the \code{eventTime} field of an OpenLineage event.
 }
+\details{
+Sub-millisecond digits are truncated, not rounded, as in the OpenLineage
+Python client. The year must be between 0001 and 9999, the range that
+RFC 3339 can express.
+}
 \examples{
 time <- as.POSIXct("2026-01-02 03:04:05", tz = "UTC")
 new_event_time(time)

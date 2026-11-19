@@ -25,8 +25,10 @@ canonicalize_json <- function(x) {
   lapply(x, canonicalize_json)
 }
 
+# Compares parsed JSON exactly: object keys sorted, no numeric tolerance, and
+# a JSON integer (`1`) distinct from a JSON number with a fraction (`1.5`).
 expect_json_semantically_equal <- function(actual, expected) {
-  testthat::expect_equal(
+  testthat::expect_identical(
     canonicalize_json(parse_json_value(actual)),
     canonicalize_json(parse_json_value(expected))
   )

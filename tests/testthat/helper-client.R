@@ -15,21 +15,17 @@ client_mock_response <- function(status_code, request) {
   )
 }
 
-client_local_env <- function(values = character()) {
-  variables <- .OPENLINEAGE_CLIENT_ENV_VARS
-  old <- Sys.getenv(variables, unset = NA_character_)
-  names(old) <- variables
+# Sets the client's environment variables for the calling test, unsetting
+# every one that `values` does not name.
+local_client_env <- function(values = character(), .env = parent.frame()) {
+  unset <- setdiff(.OPENLINEAGE_CLIENT_ENV_VARS, names(values))
+  withr::local_envvar(
+    c(values, stats::setNames(rep(NA_character_, length(unset)), unset)),
+    .local_envir = .env
+  )
+}
 
-  Sys.unsetenv(variables)
-  if (length(values) > 0L) {
-    do.call(Sys.setenv, as.list(values))
-  }
-
-  function() {
-    Sys.unsetenv(variables)
-    present <- !is.na(old)
-    if (any(present)) {
-      do.call(Sys.setenv, as.list(old[present]))
-    }
-  }
+# The Authorization header as sent, read from the request the mock received.
+sent_authorization <- function(request) {
+  httr2::req_get_headers(request, "reveal")$Authorization
 }

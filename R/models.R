@@ -38,9 +38,19 @@
   )
 }
 
+# Constructors turn an unnamed `list()` into a named one, so that it is
+# written as `{}`; the setter does the same for `x@facets <- list()`. `arg` is
+# also the property's name.
 .ol_map_property <- function(arg, facet_role = NULL) {
   S7::new_property(
     S7::class_any,
+    setter = function(self, value) {
+      if (is.list(value) && length(value) == 0L) {
+        names(value) <- character()
+      }
+      S7::prop(self, arg) <- value
+      self
+    },
     validator = function(value) {
       if (is.null(facet_role)) {
         .ol_validate_normalized_map(value, arg, call = NULL)
@@ -89,8 +99,8 @@
   )
 }
 
-.ol_dataset_array <- function(x, class, arg) {
-  x <- .ol_normalize_array(x, arg, call = parent.frame())
+.ol_dataset_array <- function(x, class, arg, call = parent.frame()) {
+  x <- .ol_normalize_array(x, arg, call = call)
   if (is.null(x)) {
     return(NULL)
   }
@@ -106,11 +116,21 @@
         "` object."
       ),
       class = "openlineage_validation_error",
-      call = parent.frame()
+      call = call
     )
   }
 
   x
+}
+
+.ol_dataset_array_property <- function(class, arg) {
+  S7::new_property(
+    S7::class_any,
+    validator = function(value) {
+      .ol_dataset_array(value, class, arg, call = NULL)
+      NULL
+    }
+  )
 }
 
 #' OpenLineage run state
@@ -322,6 +342,13 @@ OutputDataset <- S7::new_class(
 
 .ol_event_type_property <- S7::new_property(
   S7::class_any,
+  setter = function(self, value) {
+    if (is.character(value)) {
+      value <- RunState(value)
+    }
+    S7::prop(self, "event_type") <- value
+    self
+  },
   validator = function(value) {
     if (!is.null(value) && !S7::S7_inherits(value, RunState)) {
       .ol_abort(
@@ -368,8 +395,8 @@ RunEvent <- S7::new_class(
     job = .ol_model_property(Job, "job"),
     event_type = .ol_event_type_property,
     event_time = .ol_time_property("event_time"),
-    inputs = .ol_array_property("inputs"),
-    outputs = .ol_array_property("outputs"),
+    inputs = .ol_dataset_array_property(InputDataset, "inputs"),
+    outputs = .ol_dataset_array_property(OutputDataset, "outputs"),
     producer = .ol_uri_property("producer"),
     schema_url = .ol_uri_property("schema_url")
   ),
@@ -383,18 +410,24 @@ RunEvent <- S7::new_class(
     producer = OPENLINEAGE_PRODUCER,
     schema_url = OPENLINEAGE_RUN_EVENT_SCHEMA_URL
   ) {
-    if (is.character(event_type)) {
-      event_type <- RunState(event_type)
-    }
-
     S7::new_object(
       S7::S7_object(),
       run = run,
       job = job,
       event_type = event_type,
       event_time = event_time,
-      inputs = .ol_dataset_array(inputs, InputDataset, "inputs"),
-      outputs = .ol_dataset_array(outputs, OutputDataset, "outputs"),
+      inputs = .ol_dataset_array(
+        inputs,
+        InputDataset,
+        "inputs",
+        call = environment()
+      ),
+      outputs = .ol_dataset_array(
+        outputs,
+        OutputDataset,
+        "outputs",
+        call = environment()
+      ),
       producer = producer,
       schema_url = schema_url
     )

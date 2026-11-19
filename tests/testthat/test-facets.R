@@ -135,18 +135,30 @@ test_that("input and output statistics have distinct placement", {
   expect_identical(output_value$size, 512L)
 })
 
-test_that("generic facets are accepted in every facet map", {
+test_that("generic facets are accepted in every facet map (#41)", {
   facet <- ol_facet("https://example.com/facets/CustomFacet.json", value = 1L)
+  expected <- as_openlineage_list(facet)
+  placed <- list(
+    facets = Run(fixture_run_id(), list(custom = facet)),
+    facets = Job("example", "task", list(custom = facet)),
+    facets = Dataset("example", "input", list(custom = facet)),
+    inputFacets = InputDataset(
+      "example",
+      "input",
+      input_facets = list(custom = facet)
+    ),
+    outputFacets = OutputDataset(
+      "example",
+      "output",
+      output_facets = list(custom = facet)
+    )
+  )
 
-  expect_no_error(Run(fixture_run_id(), list(custom = facet)))
-  expect_no_error(Job("example", "task", list(custom = facet)))
-  expect_no_error(Dataset("example", "input", list(custom = facet)))
-  expect_no_error(
-    InputDataset("example", "input", input_facets = list(custom = facet))
-  )
-  expect_no_error(
-    OutputDataset("example", "output", output_facets = list(custom = facet))
-  )
+  for (i in seq_along(placed)) {
+    value <- as_openlineage_list(placed[[i]])
+    expect_identical(value[[names(placed)[[i]]]], list(custom = expected))
+  }
+  expect_identical(expected$value, 1L)
 })
 
 test_that("typed facets enforce their placement", {
@@ -192,4 +204,98 @@ test_that("facet validation rejects malformed values", {
   expect_snapshot(error = TRUE, {
     TagsRunFacet(list(ol_tag("pii", "true", field = "email")))
   })
+})
+
+test_that("ol_facet() fields never partial-match its arguments (#29)", {
+  url <- "https://example.com/x.json"
+
+  for (name in c("schema", "s", "sc", "schema_ur", "prod", "del")) {
+    facet <- do.call(ol_facet, c(list(url), stats::setNames(list("v"), name)))
+    value <- as_openlineage_list(facet)
+    expect_identical(value[["_schemaURL"]], url, info = name)
+    expect_identical(value[[name]], "v", info = name)
+    expect_identical(
+      value[["_producer"]],
+      OPENLINEAGE_PRODUCER,
+      info = name
+    )
+  }
+
+  named <- as_openlineage_list(ol_facet(schema = "public", schema_url = url))
+  expect_identical(named[["_schemaURL"]], url)
+  expect_identical(named$schema, "public")
+  expect_error(ol_facet(schema = url), class = "openlineage_validation_error")
+  expect_error(ol_facet(url, "other"), class = "openlineage_validation_error")
+  expect_snapshot(error = TRUE, ol_facet(schema = url))
+})
+
+test_that("statistics counts must be between 0 and 2^53 (#22, #46)", {
+  constructors <- list(
+    InputStatisticsInputDatasetFacet,
+    OutputStatisticsOutputDatasetFacet
+  )
+  for (constructor in constructors) {
+    for (argument in c("row_count", "size", "file_count")) {
+      for (value in c(0, 1, 2^53)) {
+        facet <- do.call(constructor, stats::setNames(list(value), argument))
+        expect_identical(S7::prop(facet, argument), value)
+      }
+      for (value in c(-1, 2^53 + 2, 1.5, Inf)) {
+        expect_error(
+          do.call(constructor, stats::setNames(list(value), argument)),
+          class = "openlineage_validation_error",
+          info = paste(argument, value)
+        )
+      }
+    }
+  }
+  expect_snapshot(error = TRUE, InputStatisticsInputDatasetFacet(-1))
+})
+
+test_that("other integer fields are capped at 2^53 (#22)", {
+  expect_no_error(SchemaField("a", ordinal_position = 2^53))
+  expect_error(
+    SchemaField("a", ordinal_position = 2^53 + 2),
+    class = "openlineage_validation_error"
+  )
+  expect_error(
+    EmissionPattern("PERIODIC", "SNAPSHOT", 2^53 + 2),
+    class = "openlineage_validation_error"
+  )
+})
+
+test_that("ParentRunFacet validates root (#36)", {
+  run <- Run(fixture_run_id())
+  job <- Job("example", "parent")
+  invalid <- list(
+    list(run = run),
+    list(run = job, job = run),
+    list(run = run, job = job, extra = 1),
+    "root"
+  )
+
+  for (root in invalid) {
+    expect_error(
+      ParentRunFacet(run, job, root = root),
+      class = "openlineage_validation_error"
+    )
+  }
+  facet <- ParentRunFacet(run, job, root = list(job = job, run = run))
+  expect_named(facet@root, c("run", "job"))
+  expect_error(
+    facet@root <- list(run = run),
+    class = "openlineage_validation_error"
+  )
+})
+
+test_that("tags setters keep the field restriction (#25)", {
+  tag <- ol_tag("k", "v", field = "col")
+  job <- TagsJobFacet()
+  run <- TagsRunFacet()
+  dataset <- TagsDatasetFacet()
+
+  expect_error(job@tags <- list(tag), class = "openlineage_validation_error")
+  expect_error(run@tags <- list(tag), class = "openlineage_validation_error")
+  dataset@tags <- list(tag)
+  expect_identical(as_openlineage_list(dataset)$tags[[1L]]$field, "col")
 })
