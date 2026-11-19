@@ -39,8 +39,8 @@ the tests are the contract.
 
 ## Current state
 
-On CRAN as 0.1.0 (published 2026-07-30). `main` is the development version,
-`0.1.0.9000`, heading for 0.2.0. It targets
+On CRAN as 0.1.0 (published 2026-07-30). The `release-0.2.0` branch sets
+`Version: 0.2.0`, ready to submit once merged with a green full run. It targets
 OpenLineage schema 2.0.2 (`OPENLINEAGE_SCHEMA_VERSION`).
 
 Implemented: S7 models for run states, runs, jobs, datasets and run events;
@@ -55,8 +55,6 @@ transports other than HTTP (for example Kafka or file).
 Gaps from the shared rules, as of 2026-11-18:
 
 - No `.agents/assurance.md`.
-- `cran-comments.md` still lists a local macOS check as its test
-  environment, not CI legs.
 
 ## Versions and dependents
 
@@ -140,9 +138,20 @@ Deviation: `README.md` is the source; there is no `README.Rmd`.
   backs off as `2^(n - 1)` seconds capped at 30. 401 and 403 are never
   retried. `.ol_http_retry_sleep()` is the one place that sleeps, so tests
   can replace it.
-- **Retry-After is parsed by the package, not httr2.** Seconds, or an
-  IMF-fixdate measured from the response's `Date` (else
-  `.ol_http_now()`); anything else falls back to back-off. Redirects are
+- **Retry-After is parsed by the package, not httr2.** `build_request()`
+  sets `req_retry(max_tries = 1, is_transient = FALSE)`, or httr2 parses
+  `Retry-After` itself on 429/503 and fails on a date with no `Date` header
+  (#61; `local_mocked_responses()` skips that code, so tests assert the
+  policy). Seconds, or an HTTP-date in any of the three RFC 9110 forms,
+  measured from the response's `Date` (else `.ol_http_now()`); anything
+  else falls back to back-off.
+- **Curl owns the framing headers.** `headers` may not set `Content-Type`,
+  `Content-Length`, `Transfer-Encoding`, `Host`, `Connection`, `Expect`,
+  `TE`, `Trailer` or `Upgrade` (#62).
+- **Strings become UTF-8 through `.ol_as_utf8()`, never bare
+  `enc2utf8()`,** which escapes non-ASCII bytes as `<c3><a9>` in a C locale.
+  Unmarked strings that are valid UTF-8 are taken as UTF-8; `bytes` is
+  rejected (#63). Redirects are
   never followed (`followlocation = 0`); a 3xx is an `openlineage_http_error`.
   A connection failure's `parent` is a stripped copy of the innermost curl
   condition (class and message only), never the httr2 condition, which holds
@@ -198,7 +207,8 @@ package-own workflows.
 - `R-CMD-check.yaml`: calls `r-cmd-check.yml@v1` with `profile: auto`
   (quick on pull requests, full on the Saturday 10:34 UTC schedule, on
   dispatch and on `full-ci`). Pure R, so the CRAN-compiler containers are
-  turned off (`containers: '[]'`).
+  turned off (`containers: '[]'`). `runners` adds Windows R-devel to the
+  r-actions default.
 - `coverage.yaml`: calls `coverage.yml` pinned to a commit (write token);
   the badge is `badges/coverage.svg` on `gh-pages`.
 - `pkgdown.yaml`: calls `pkgdown.yml@v1`, deploying from `main` and from
