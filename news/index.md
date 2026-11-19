@@ -2,6 +2,8 @@
 
 ## openlineage 0.2.0
 
+CRAN release: 2026-11-19
+
 ### Breaking changes
 
 - [`ol_facet()`](https://pedrobtz.github.io/openlineage/reference/ol_facet.md)
