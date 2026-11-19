@@ -13,7 +13,9 @@ environment equivalents. `OPENLINEAGE_DISABLED` accepts only `true` or
 A disabled client uses
 [NoopTransport](https://pedrobtz.github.io/openlineage/reference/local_transports.md).
 An injected `transport` takes precedence over HTTP environment
-variables. If neither a transport nor URL is configured, the client uses
+variables. Supplying `transport` together with `url`, `api_key` or any
+other HTTP argument is an error, also when the client is disabled. If
+neither a transport nor URL is configured, the client uses
 [ConsoleTransport](https://pedrobtz.github.io/openlineage/reference/local_transports.md).
 Supplying partial HTTP settings without a URL is an error.
 
@@ -39,6 +41,8 @@ An R6 OpenLineage client object.
 - [`OpenLineageClient$new()`](#method-OpenLineageClient-initialize)
 
 - [`OpenLineageClient$emit()`](#method-OpenLineageClient-emit)
+
+- [`OpenLineageClient$close()`](#method-OpenLineageClient-close)
 
 - [`OpenLineageClient$print()`](#method-OpenLineageClient-print)
 
@@ -129,6 +133,25 @@ Emit an OpenLineage event through the configured transport.
 #### Returns
 
 `event`, invisibly, after successful delivery.
+
+------------------------------------------------------------------------
+
+### `OpenLineageClient$close()`
+
+Close the transport, finishing any pending work. The built-in transports
+have none. A custom transport without a
+[`close()`](https://rdrr.io/r/base/connections.html) method is left as
+it is.
+
+#### Usage
+
+    OpenLineageClient$close()
+
+#### Returns
+
+The value of the transport's
+[`close()`](https://rdrr.io/r/base/connections.html), invisibly, or
+`TRUE` when it has none.
 
 ------------------------------------------------------------------------
 

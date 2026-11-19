@@ -1,6 +1,5 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://pedrobtz.github.io/openlineage/404.html</loc></url>
-<url><loc>https://pedrobtz.github.io/openlineage/AGENTS.html</loc></url>
 <url><loc>https://pedrobtz.github.io/openlineage/LICENSE-text.html</loc></url>
 <url><loc>https://pedrobtz.github.io/openlineage/LICENSE.html</loc></url>
 <url><loc>https://pedrobtz.github.io/openlineage/articles/index.html</loc></url>
@@ -15,6 +14,7 @@
 <url><loc>https://pedrobtz.github.io/openlineage/reference/RunEvent.html</loc></url>
 <url><loc>https://pedrobtz.github.io/openlineage/reference/RunState.html</loc></url>
 <url><loc>https://pedrobtz.github.io/openlineage/reference/as_openlineage_list.html</loc></url>
+<url><loc>https://pedrobtz.github.io/openlineage/reference/column_lineage_facets.html</loc></url>
 <url><loc>https://pedrobtz.github.io/openlineage/reference/dataset_facets.html</loc></url>
 <url><loc>https://pedrobtz.github.io/openlineage/reference/datasets.html</loc></url>
 <url><loc>https://pedrobtz.github.io/openlineage/reference/index.html</loc></url>
