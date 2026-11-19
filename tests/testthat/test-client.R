@@ -408,3 +408,82 @@ test_that("close() delegates to the transport (#47)", {
   expect_true(built_in$close())
   expect_true(OpenLineageClient$new(disabled = TRUE)$close())
 })
+
+test_that("the client forwards every HTTP argument (#68)", {
+  local_client_env()
+  requests <- list()
+  httr2::local_mocked_responses(function(req) {
+    requests[[length(requests) + 1L]] <<- req
+    client_mock_response(503L, req)
+  })
+  testthat::local_mocked_bindings(
+    .ol_http_retry_sleep = function(seconds) NULL,
+    .package = "openlineage"
+  )
+  expect_warning(
+    client <- OpenLineageClient$new(
+      url = "https://example.com",
+      endpoint = "custom/lineage",
+      headers = c(`X-Tenant` = "a"),
+      timeout = 2.5,
+      verify_tls = FALSE,
+      max_retries = 0L
+    ),
+    class = "openlineage_insecure_tls_warning"
+  )
+
+  # With the default of 3 retries the 503 would be sent four times.
+  expect_error(
+    client$emit(client_test_event()),
+    class = "openlineage_http_error"
+  )
+
+  expect_length(requests, 1L)
+  request <- requests[[1L]]
+  expect_identical(request$url, "https://example.com/custom/lineage")
+  expect_identical(
+    httr2::req_get_headers(request, "reveal"),
+    list(`X-Tenant` = "a")
+  )
+  expect_identical(request$options$timeout_ms, 2500)
+  expect_identical(request$options$ssl_verifypeer, 0)
+})
+
+test_that("close() raises classed conditions (#66)", {
+  local_client_env()
+  FailingTransport <- R6::R6Class(
+    "FailingTransport",
+    public = list(
+      emit = function(event) invisible(event),
+      close = function() stop("boom")
+    )
+  )
+  NonFunctionClose <- R6::R6Class(
+    "NonFunctionClose",
+    public = list(emit = function(event) invisible(event), close = "x")
+  )
+
+  failing <- OpenLineageClient$new(transport = FailingTransport$new())
+  condition <- tryCatch(failing$close(), error = identity)
+  expect_s3_class(condition, "openlineage_transport_error")
+  expect_identical(conditionMessage(condition$parent), "boom")
+  expect_true(
+    OpenLineageClient$new(transport = NonFunctionClose$new())$close()
+  )
+
+  broken <- OpenLineageClient$new(transport = AccumulatingTransport$new())
+  broken$transport <- "x"
+  expect_error(broken$close(), class = "openlineage_config_error")
+})
+
+test_that("closing twice and emitting after close are no-ops for built-ins (#66)", {
+  local_client_env()
+  transport <- AccumulatingTransport$new()
+  client <- OpenLineageClient$new(transport = transport)
+
+  expect_true(client$close())
+  expect_true(client$close())
+  client$emit(client_test_event())
+
+  expect_length(transport$events, 1L)
+})
