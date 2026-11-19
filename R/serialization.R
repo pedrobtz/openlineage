@@ -142,17 +142,29 @@
     )
   }
 
+  if (inherits(x, "POSIXlt")) {
+    return(.ol_atomic_to_wire(as.POSIXct(x), call = call))
+  }
+
   if (is.list(x)) {
+    # A classed list (`numeric_version`, `simple.list`, a user's S3 object)
+    # would be written as a plain object or array, its class dropped.
+    if (length(setdiff(oldClass(x), "AsIs")) > 0L) {
+      .ol_wire_abort(
+        paste0("objects of class `", class(x)[[1L]], "`"),
+        call
+      )
+    }
     object <- !is.null(names(x))
     if (object) {
-      .ol_validate_wire_names(names(x), call = call)
+      wire_names <- .ol_validate_wire_names(names(x), call = call)
     }
     converted <- lapply(x, .ol_to_wire, call = call)
     keep <- !vapply(converted, is.null, logical(1))
     converted <- converted[keep]
 
     if (object) {
-      names(converted) <- names(x)[keep]
+      names(converted) <- wire_names[keep]
     } else {
       names(converted) <- NULL
     }
@@ -178,11 +190,12 @@
   if (anyDuplicated(x)) {
     .ol_wire_abort("lists with repeated names", call)
   }
-  if (!all(validUTF8(enc2utf8(x)))) {
+  utf8 <- .ol_as_utf8(x)
+  if (is.null(utf8)) {
     .ol_wire_abort("names that are not valid UTF-8", call)
   }
 
-  invisible(x)
+  utf8
 }
 
 # Converts an atomic vector to the value jsonlite writes, or rejects it when
@@ -208,6 +221,14 @@
       character(1)
     )
   } else if (inherits(x, "Date")) {
+    days <- unclass(x)
+    if (!all(is.finite(days))) {
+      .ol_wire_abort("infinite dates", call)
+    }
+    years <- as.POSIXlt(x)$year + 1900L
+    if (any(years < 1L | years > 9999L)) {
+      .ol_wire_abort("dates outside the years 0001 to 9999", call)
+    }
     x <- format(x, "%Y-%m-%d")
   } else if (is.factor(x)) {
     x <- as.character(x)
@@ -222,10 +243,11 @@
     .ol_wire_abort("infinite numbers", call)
   }
   if (is.character(x)) {
-    x <- enc2utf8(x)
-    if (!all(validUTF8(x))) {
+    utf8 <- .ol_as_utf8(x)
+    if (is.null(utf8)) {
       .ol_wire_abort("text that is not valid UTF-8", call)
     }
+    x <- utf8
   }
 
   if (as_is) I(x) else x

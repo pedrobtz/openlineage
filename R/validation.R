@@ -1,3 +1,40 @@
+# Returns `x` as UTF-8-marked strings, or `NULL` if any is not text that can
+# be read as UTF-8. `enc2utf8()` alone is not enough: in a C locale it turns
+# non-ASCII bytes of an unmarked string into `<c3><a9>` escapes, which are
+# valid UTF-8. So:
+#
+# * a `latin1`-marked string is translated;
+# * an unmarked string that is valid UTF-8 is taken as UTF-8;
+# * another unmarked string is translated from the native encoding, but only
+#   in a locale that names one (not UTF-8, C or POSIX);
+# * a `bytes`-marked string is rejected.
+.ol_as_utf8 <- function(x) {
+  encoding <- Encoding(x)
+  if (any(encoding == "bytes")) {
+    return(NULL)
+  }
+
+  out <- x
+  latin1 <- encoding == "latin1"
+  out[latin1] <- iconv(x[latin1], "latin1", "UTF-8")
+
+  unknown <- encoding == "unknown"
+  native <- unknown & !validUTF8(x)
+  if (any(native)) {
+    ctype <- Sys.getlocale("LC_CTYPE")
+    if (isTRUE(l10n_info()[["UTF-8"]]) || ctype %in% c("C", "POSIX")) {
+      return(NULL)
+    }
+    out[native] <- enc2utf8(x[native])
+  }
+
+  if (anyNA(out) || !all(validUTF8(out))) {
+    return(NULL)
+  }
+  Encoding(out) <- "UTF-8"
+  out
+}
+
 .ol_validate_scalar_character <- function(
   x,
   arg,
@@ -12,7 +49,7 @@
     )
   }
 
-  if (!validUTF8(enc2utf8(x))) {
+  if (is.null(.ol_as_utf8(x))) {
     .ol_abort(
       paste0("`", arg, "` must be valid UTF-8 text."),
       class = "openlineage_validation_error",

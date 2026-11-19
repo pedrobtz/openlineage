@@ -155,6 +155,9 @@ test_that("generic values map to JSON as documented (#30, #51)", {
     time = as.POSIXct("2026-01-02 03:04:05.123", tz = "UTC"),
     date = as.Date("2026-01-02"),
     level = factor("low"),
+    levels = factor(c("b", "a", "b")),
+    boxed = I(2.5),
+    boxed_int = I(3L),
     text = "zéta ✓",
     dropped = NULL
   )
@@ -171,6 +174,9 @@ test_that("generic values map to JSON as documented (#30, #51)", {
   expect_identical(json$time, "2026-01-02T03:04:05.123Z")
   expect_identical(json$date, "2026-01-02")
   expect_identical(json$level, "low")
+  expect_identical(json$levels, list("b", "a", "b"))
+  expect_identical(json$boxed, list(2.5))
+  expect_identical(json$boxed_int, list(3L))
   expect_identical(json$text, "zéta ✓")
   expect_false("dropped" %in% names(json))
   expect_match(
@@ -196,7 +202,15 @@ test_that("values jsonlite would change silently are rejected (#30, #31)", {
     as.difftime(1, units = "secs"),
     rawToChar(as.raw(c(0x66, 0xff, 0x6f))),
     stats::setNames(list(1), rawToChar(as.raw(c(0x66, 0xff)))),
-    as.POSIXct(NA)
+    as.POSIXct(NA),
+    as.Date(Inf),
+    as.Date(-Inf),
+    as.Date(3000000),
+    as.Date(-800000),
+    as.Date("0000-06-01"),
+    numeric_version("1.2.3"),
+    structure(list(a = 1), class = "foo"),
+    R.version
   )
 
   for (i in seq_along(invalid)) {
@@ -251,4 +265,79 @@ test_that("unknown S7 objects and unmapped facets are rejected (#36)", {
     class = "openlineage_validation_error"
   )
   expect_snapshot(error = TRUE, as_openlineage_list(UnmappedFacet()))
+})
+
+test_that("POSIXlt values are written as event times (#65)", {
+  json <- generic_json(
+    t = as.POSIXlt("2026-01-02 03:04:05.123", tz = "UTC"),
+    at_zurich = as.POSIXlt("2026-01-02 04:04:05", tz = "Europe/Zurich")
+  )
+
+  expect_identical(json$t, "2026-01-02T03:04:05.123Z")
+  expect_identical(json$at_zurich, "2026-01-02T03:04:05.000Z")
+  expect_identical(
+    as_openlineage_list(as.POSIXlt("2026-01-02", tz = "UTC")),
+    "2026-01-02T00:00:00.000Z"
+  )
+})
+
+test_that("Dates at the year limits are written; outside them rejected (#64)", {
+  json <- generic_json(
+    first = as.Date("0001-01-01"),
+    last = as.Date("9999-12-31")
+  )
+
+  expect_identical(json$first, "0001-01-01")
+  expect_identical(json$last, "9999-12-31")
+  expect_error(
+    generic_text(v = as.Date("0001-01-01") - 1),
+    class = "openlineage_validation_error"
+  )
+  expect_error(
+    generic_text(v = as.Date("9999-12-31") + 1),
+    class = "openlineage_validation_error"
+  )
+  expect_snapshot(error = TRUE, generic_text(v = as.Date(Inf)))
+  expect_snapshot(error = TRUE, generic_text(v = R.version))
+})
+
+test_that("UTF-8 text reaches the wire as UTF-8 bytes in a C locale (#63)", {
+  withr::local_locale(c(LC_CTYPE = "C"))
+  text <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xc3, 0xa9)))
+  invalid <- rawToChar(as.raw(c(0x61, 0xff)))
+  latin1 <- rawToChar(as.raw(c(0x63, 0x61, 0x66, 0xe9)))
+  Encoding(latin1) <- "latin1"
+  bytes <- function(x) charToRaw(to_openlineage_json(x))
+  cafe <- as.raw(c(0x63, 0x61, 0x66, 0xc3, 0xa9))
+  contains <- function(haystack, needle) {
+    any(vapply(
+      seq_len(length(haystack) - length(needle) + 1L),
+      \(i) identical(haystack[i:(i + length(needle) - 1L)], needle),
+      logical(1)
+    ))
+  }
+
+  expect_true(contains(bytes(Job("ns", text)), cafe))
+  expect_true(contains(bytes(Job("ns", latin1)), cafe))
+  facet <- ol_facet(
+    "https://example.com/x.json",
+    v = text,
+    n = stats::setNames(list(1L), text)
+  )
+  expect_identical(sum(bytes(facet) == as.raw(0xc3)), 2L)
+  expect_false(grepl(
+    "<",
+    rawToChar(bytes(facet)),
+    fixed = TRUE,
+    useBytes = TRUE
+  ))
+
+  expect_error(Job("ns", invalid), class = "openlineage_validation_error")
+  expect_error(
+    generic_text(v = invalid),
+    class = "openlineage_validation_error"
+  )
+  bytes_marked <- text
+  Encoding(bytes_marked) <- "bytes"
+  expect_error(Job("ns", bytes_marked), class = "openlineage_validation_error")
 })
