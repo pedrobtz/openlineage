@@ -19,8 +19,8 @@ invisibly after success.
 Its \code{clear()} method removes all accumulated events and returns the transport
 invisibly.
 
-\code{ConsoleTransport} writes one JSON event to \code{stream}. Set \code{pretty = TRUE}
-for indented output.
+\code{ConsoleTransport} writes one indented JSON event to \code{stream}. Set
+\code{pretty = FALSE} for single-line output.
 
 \code{NoopTransport} validates an event but performs no output or storage.
 

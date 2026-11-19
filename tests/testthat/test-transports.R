@@ -33,12 +33,15 @@ test_that("console transport writes compact JSON", {
   stream <- textConnection("output", "w", local = TRUE)
   on.exit(close(stream))
   transport <- ConsoleTransport$new(stream, pretty = FALSE)
-  event <- transport_test_event()
+  event <- minimal_start_event()
 
   result <- withVisible(transport$emit(event))
 
   expect_length(output, 1L)
-  expect_json_semantically_equal(output, to_openlineage_json(event))
+  expect_json_semantically_equal(
+    output,
+    read_json_fixture("minimal-start.json")
+  )
   expect_identical(result$value, event)
   expect_identical(result$visible, FALSE)
 })
@@ -48,14 +51,13 @@ test_that("console transport supports pretty JSON", {
   stream <- textConnection("output", "w", local = TRUE)
   on.exit(close(stream))
   transport <- ConsoleTransport$new(stream, pretty = TRUE)
-  event <- transport_test_event()
 
-  transport$emit(event)
+  transport$emit(minimal_start_event())
 
   expect_gt(length(output), 1L)
   expect_json_semantically_equal(
     paste(output, collapse = "\n"),
-    to_openlineage_json(event)
+    read_json_fixture("minimal-start.json")
   )
 })
 
@@ -163,4 +165,15 @@ test_that("console write failures are transport errors", {
 
   expect_s3_class(condition, "openlineage_transport_error")
   expect_snapshot(error = TRUE, console_with_closed_stream("emit"))
+})
+
+test_that("the base transport's emit() must be implemented (#36)", {
+  transport <- .OpenLineageTransport$new()
+
+  expect_error(
+    transport$emit(transport_test_event()),
+    class = "openlineage_transport_error"
+  )
+  expect_error(transport$emit("x"), class = "openlineage_validation_error")
+  expect_true(transport$close())
 })

@@ -18,7 +18,9 @@ environment equivalents. \code{OPENLINEAGE_DISABLED} accepts only \code{true} or
 \code{false}, ignoring case and surrounding whitespace.
 
 A disabled client uses \link{NoopTransport}. An injected \code{transport} takes
-precedence over HTTP environment variables. If neither a transport nor URL
+precedence over HTTP environment variables. Supplying \code{transport}
+together with \code{url}, \code{api_key} or any other HTTP argument is an error,
+also when the client is disabled. If neither a transport nor URL
 is configured, the client uses \link{ConsoleTransport}. Supplying partial HTTP
 settings without a URL is an error.
 }
@@ -48,6 +50,7 @@ length(transport$events)
   \itemize{
     \item \href{#method-OpenLineageClient-initialize}{\code{OpenLineageClient$new()}}
     \item \href{#method-OpenLineageClient-emit}{\code{OpenLineageClient$emit()}}
+    \item \href{#method-OpenLineageClient-close}{\code{OpenLineageClient$close()}}
     \item \href{#method-OpenLineageClient-print}{\code{OpenLineageClient$print()}}
     \item \href{#method-OpenLineageClient-clone}{\code{OpenLineageClient$clone()}}
   }
@@ -116,6 +119,24 @@ request attempt.}
   }
   \subsection{Returns}{
     \code{event}, invisibly, after successful delivery.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-OpenLineageClient-close"></a>}}
+\if{latex}{\out{\hypertarget{method-OpenLineageClient-close}{}}}
+\subsection{\code{OpenLineageClient$close()}}{
+  Close the transport, finishing any pending work. The built-in
+transports have none. A custom transport without a \code{close()} method
+is left as it is.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{OpenLineageClient$close()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The value of the transport's \code{close()}, invisibly, or \code{TRUE}
+when it has none.
   }
 }
 

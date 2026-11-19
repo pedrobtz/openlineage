@@ -18,11 +18,11 @@ Depends:
 Encoding: UTF-8
 Language: en-US
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 8.0.0
 Suggests: 
     knitr (>= 1.42),
     rmarkdown (>= 2.20),
-    testthat (>= 3.2.2)
+    testthat (>= 3.2.2),
+    withr (>= 2.5.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 Imports: 
@@ -32,3 +32,4 @@ Imports:
     R6 (>= 2.5.0),
     S7 (>= 0.2.0),
     uuid (>= 1.1-0)
+Config/roxygen2/version: 8.1.1
