@@ -225,11 +225,14 @@
     if (!all(is.finite(days))) {
       .ol_wire_abort("infinite dates", call)
     }
-    years <- as.POSIXlt(x)$year + 1900L
+    fields <- as.POSIXlt(x)
+    years <- fields$year + 1900L
     if (any(years < 1L | years > 9999L)) {
       .ol_wire_abort("dates outside the years 0001 to 9999", call)
     }
-    x <- format(x, "%Y-%m-%d")
+    # Not `format(x, "%Y-%m-%d")`: glibc does not pad years below 1000, so
+    # 0001-01-01 would be written as `1-01-01` on Linux.
+    x <- sprintf("%04d-%02d-%02d", years, fields$mon + 1L, fields$mday)
   } else if (is.factor(x)) {
     x <- as.character(x)
   } else if (length(setdiff(oldClass(x), "AsIs")) > 0L) {

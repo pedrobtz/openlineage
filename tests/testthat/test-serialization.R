@@ -284,10 +284,14 @@ test_that("POSIXlt values are written as event times (#65)", {
 test_that("Dates at the year limits are written; outside them rejected (#64)", {
   json <- generic_json(
     first = as.Date("0001-01-01"),
+    padded = as.Date("0999-03-04"),
     last = as.Date("9999-12-31")
   )
 
+  # glibc's `%Y` does not pad years below 1000; the output must not depend on
+  # the platform's strftime().
   expect_identical(json$first, "0001-01-01")
+  expect_identical(json$padded, "0999-03-04")
   expect_identical(json$last, "9999-12-31")
   expect_error(
     generic_text(v = as.Date("0001-01-01") - 1),
