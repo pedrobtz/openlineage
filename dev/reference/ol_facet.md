@@ -77,13 +77,13 @@ facet <- ol_facet(
 )
 Run(new_run_id(), facets = list(custom = facet))
 #> <openlineage::Run>
-#>  @ run_id: chr "90fdb48c-c670-4fb5-afde-d0a5a58341f5"
-#>  @ facets:List of 1
+#>  @ run_id: chr "c779c244-75d0-4f5f-9e7f-1fc1fea3dc96"
+#>  @ facets: List of 1
 #>  .. $ custom: <openlineage::GenericFacet>
 #>  ..  ..@ producer  : chr "https://github.com/pedrobtz/openlineage"
 #>  ..  ..@ schema_url: chr "https://example.com/CustomRunFacet.json"
 #>  ..  ..@ deleted   : NULL
-#>  ..  ..@ fields    :List of 2
+#>  ..  ..@ fields    : List of 2
 #>  .. .. .. $ customValue: chr "example"
 #>  .. .. .. $ tags       : 'AsIs' chr "nightly"
 ```

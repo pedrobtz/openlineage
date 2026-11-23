@@ -75,7 +75,7 @@ SchemaDatasetFacet(list(field))
 #>  @ producer  : chr "https://github.com/pedrobtz/openlineage"
 #>  @ schema_url: chr "https://openlineage.io/spec/facets/1-2-0/SchemaDatasetFacet.json#/$defs/SchemaDatasetFacet"
 #>  @ deleted   : NULL
-#>  @ fields    :List of 1
+#>  @ fields    : List of 1
 #>  .. $ : <openlineage::SchemaField>
 #>  ..  ..@ name            : chr "order_id"
 #>  ..  ..@ type            : chr "INTEGER"

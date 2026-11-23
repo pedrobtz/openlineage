@@ -11,7 +11,7 @@ whole dataset."><meta name="robots" content="noindex"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">openlineage</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.1.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.2.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -165,29 +165,29 @@ deprecated per-column <code>transformationDescription</code> and
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;openlineage::OutputDataset&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  @ namespace    : chr "postgres://warehouse"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  @ name         : chr "analytics.customers"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  @ facets       :List of 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  @ facets       : List of 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. $ columnLineage: &lt;openlineage::ColumnLineageDatasetFacet&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ producer  : chr "https://github.com/pedrobtz/openlineage"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ schema_url: chr "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json#/$defs/ColumnLineageDatasetFacet"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ deleted   : NULL</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ fields    :List of 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ fields    : List of 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. $ customer_name:List of 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..$ : &lt;openlineage::ColumnLineageInputField&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  .. ..@ namespace      : chr "postgres://warehouse"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  .. ..@ name           : chr "public.customers"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  .. ..@ field          : chr "name"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  .. ..@ transformations:List of 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  .. ..@ transformations: List of 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. .. $ : &lt;openlineage::ColumnLineageTransformation&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. ..  ..@ type       : chr "DIRECT"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. ..  ..@ subtype    : chr "IDENTITY"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. ..  ..@ description: NULL</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. ..  ..@ masking    : logi FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ dataset   :List of 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ..  ..@ dataset   : List of 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. $ : &lt;openlineage::ColumnLineageInputField&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ namespace      : chr "postgres://warehouse"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ name           : chr "public.customers"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ field          : chr "active"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ transformations:List of 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. ..  ..@ transformations: List of 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. .. $ : &lt;openlineage::ColumnLineageTransformation&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  ..@ type       : chr "INDIRECT"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  .. .. .. .. ..  ..@ subtype    : chr "FILTER"</span>

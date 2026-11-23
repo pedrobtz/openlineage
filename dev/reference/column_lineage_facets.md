@@ -123,29 +123,29 @@ OutputDataset(
 #> <openlineage::OutputDataset>
 #>  @ namespace    : chr "postgres://warehouse"
 #>  @ name         : chr "analytics.customers"
-#>  @ facets       :List of 1
+#>  @ facets       : List of 1
 #>  .. $ columnLineage: <openlineage::ColumnLineageDatasetFacet>
 #>  ..  ..@ producer  : chr "https://github.com/pedrobtz/openlineage"
 #>  ..  ..@ schema_url: chr "https://openlineage.io/spec/facets/1-2-0/ColumnLineageDatasetFacet.json#/$defs/ColumnLineageDatasetFacet"
 #>  ..  ..@ deleted   : NULL
-#>  ..  ..@ fields    :List of 1
+#>  ..  ..@ fields    : List of 1
 #>  .. .. .. $ customer_name:List of 1
 #>  .. .. ..  ..$ : <openlineage::ColumnLineageInputField>
 #>  .. .. ..  .. ..@ namespace      : chr "postgres://warehouse"
 #>  .. .. ..  .. ..@ name           : chr "public.customers"
 #>  .. .. ..  .. ..@ field          : chr "name"
-#>  .. .. ..  .. ..@ transformations:List of 1
+#>  .. .. ..  .. ..@ transformations: List of 1
 #>  .. .. .. .. .. .. $ : <openlineage::ColumnLineageTransformation>
 #>  .. .. .. .. .. ..  ..@ type       : chr "DIRECT"
 #>  .. .. .. .. .. ..  ..@ subtype    : chr "IDENTITY"
 #>  .. .. .. .. .. ..  ..@ description: NULL
 #>  .. .. .. .. .. ..  ..@ masking    : logi FALSE
-#>  ..  ..@ dataset   :List of 1
+#>  ..  ..@ dataset   : List of 1
 #>  .. .. .. $ : <openlineage::ColumnLineageInputField>
 #>  .. .. ..  ..@ namespace      : chr "postgres://warehouse"
 #>  .. .. ..  ..@ name           : chr "public.customers"
 #>  .. .. ..  ..@ field          : chr "active"
-#>  .. .. ..  ..@ transformations:List of 1
+#>  .. .. ..  ..@ transformations: List of 1
 #>  .. .. .. .. .. $ : <openlineage::ColumnLineageTransformation>
 #>  .. .. .. .. ..  ..@ type       : chr "INDIRECT"
 #>  .. .. .. .. ..  ..@ subtype    : chr "FILTER"

@@ -44,7 +44,7 @@ TagsJobFacet(list(tag))
 #>  @ producer  : chr "https://github.com/pedrobtz/openlineage"
 #>  @ schema_url: chr "https://openlineage.io/spec/facets/1-0-0/TagsJobFacet.json#/$defs/TagsJobFacet"
 #>  @ deleted   : NULL
-#>  @ tags      :List of 1
+#>  @ tags      : List of 1
 #>  .. $ : <openlineage::OpenLineageTag>
 #>  ..  ..@ key   : chr "environment"
 #>  ..  ..@ value : chr "production"
@@ -55,7 +55,7 @@ TagsRunFacet(list(tag))
 #>  @ producer  : chr "https://github.com/pedrobtz/openlineage"
 #>  @ schema_url: chr "https://openlineage.io/spec/facets/1-0-0/TagsRunFacet.json#/$defs/TagsRunFacet"
 #>  @ deleted   : NULL
-#>  @ tags      :List of 1
+#>  @ tags      : List of 1
 #>  .. $ : <openlineage::OpenLineageTag>
 #>  ..  ..@ key   : chr "environment"
 #>  ..  ..@ value : chr "production"
@@ -68,7 +68,7 @@ TagsDatasetFacet(list(
 #>  @ producer  : chr "https://github.com/pedrobtz/openlineage"
 #>  @ schema_url: chr "https://openlineage.io/spec/facets/1-0-0/TagsDatasetFacet.json#/$defs/TagsDatasetFacet"
 #>  @ deleted   : NULL
-#>  @ tags      :List of 1
+#>  @ tags      : List of 1
 #>  .. $ : <openlineage::OpenLineageTag>
 #>  ..  ..@ key   : chr "sensitivity"
 #>  ..  ..@ value : chr "restricted"
