@@ -1,5 +1,8 @@
 # openlineage (development version)
 
+* The test suite no longer depends on how R parses long decimal literals, so
+  it passes on platforms without long doubles (CRAN noLD check, #96).
+
 # openlineage 0.2.0
 
 ## Breaking changes
