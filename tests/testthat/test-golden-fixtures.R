@@ -39,7 +39,9 @@ test_that("generic numbers match the Python golden fixture (#22)", {
   facet <- ol_facet(
     "https://example.com/NumbersRunFacet.json",
     sum = 0.1 + 0.2,
-    long = 123456789.123456789,
+    # 123456789.123456789 rounded to the nearest double, written in hex: R's
+    # decimal parser mis-rounds the literal without long doubles (noLD).
+    long = 0x1.d6f34547e6b75p+26,
     two53 = 2^53,
     big = 3e9,
     quadrillion = 1e15,
