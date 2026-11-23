@@ -208,7 +208,8 @@ package-own workflows.
   (quick on pull requests, full on the Saturday 10:34 UTC schedule, on
   dispatch and on `full-ci`). Pure R, so the CRAN-compiler containers are
   turned off (`containers: '[]'`). `runners` adds Windows R-devel to the
-  r-actions default.
+  r-actions default. `nold: true` adds CRAN's noLD flavor (full profile
+  only; #96).
 - `coverage.yaml`: calls `coverage.yml` pinned to a commit (write token);
   the badge is `badges/coverage.svg` on `gh-pages`.
 - `pkgdown.yaml`: calls `pkgdown.yml@v1`, deploying from `main` and from

@@ -39,6 +39,10 @@ jobs:
       # compile.
       containers: '[]'
       quick-containers: '[]'
+      # CRAN's noLD flavor (R built --disable-long-double), full profile only.
+      # The package formats and parses doubles, which is what it exercises
+      # (#96).
+      nold: true
       # The r-actions default plus Windows R-devel, CRAN's flavor that no
       # other leg checks (full profile only).
       runners: >-
